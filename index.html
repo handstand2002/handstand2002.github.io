@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram Animator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-color: #f9f9f9;
+        }
+
+        #container {
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            height: 90vh;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #yamlPane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-right: 1px solid #ddd;
+        }
+
+        #yamlInput, #yamlDefaultsDisplay {
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 10px;
+            font-family: monospace;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: none;
+        }
+
+        #yamlInput {
+            height: 50%;
+            background-color: #ffffff;
+        }
+
+        #yamlDefaultsDisplay {
+            height: 25%;
+            background-color: #eaeaea;
+            color: #555;
+        }
+
+        #canvasPane {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #diagramCanvas {
+            border: 1px solid #ccc;
+            background-color: #ffffff;
+            border-radius: 4px;
+            max-width: 100%;
+            max-height: 80%;
+        }
+
+        #controlsPane {
+            flex: 0.5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-color: #f7f7f7;
+            border-left: 1px solid #ddd;
+        }
+
+        #controlsPane button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #controlsPane button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script src="https://cdn.rawgit.com/jnordberg/gif.js/master/dist/gif.js"></script>
+    <script src="https://cdn.rawgit.com/jnordberg/gif.js/master/dist/gif.worker.js"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div id="container">
+        <!-- YAML input and default properties display -->
+        <div id="yamlPane">
+            <textarea id="yamlInput" placeholder="Enter your YAML here..."></textarea>
+            <textarea id="yamlDefaultsDisplay" placeholder="Object properties with defaults" readonly></textarea>
+        </div>
+
+        <!-- Canvas display -->
+        <div id="canvasPane">
+            <canvas id="diagramCanvas" width="400" height="400"></canvas>
+        </div>
+
+        <!-- Control buttons -->
+        <div id="controlsPane">
+            <button id="loadYAMLButton">Load YAML</button>
+            <button id="animateButton">Animate</button>
+            <button id="generateGIFButton">Generate GIF</button>
+        </div>
+    </div>
+</body>
+</html>
