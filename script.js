@@ -474,6 +474,14 @@ function animateDiagram(objectsAndTransitions) {
           // do nothing
         }
         const elapsedTime = Date.now() - startTime;
+
+        if (lastFrameTime == 0) {
+          delay = 0;
+        } else {
+          delay = Date.now() - lastFrameTime
+        }
+        const frameDelay = delay;
+
         lastFrameTime = Date.now()
 
         elements.forEach(element => {
@@ -530,7 +538,11 @@ function animateDiagram(objectsAndTransitions) {
         });
 
         drawDiagram(objectsAndTransitions);
-        frames.push(ctx.getImageData(0, 0, canvas.width, canvas.height)); // Capture the frame
+        let frame = {
+          img: ctx.getImageData(0, 0, canvas.width, canvas.height),
+          delay: frameDelay
+        }
+        frames.push(frame); // Capture the frame
 
         if (elapsedTime < animationDuration) {
           animationId = requestAnimationFrame(animate);
@@ -621,7 +633,7 @@ function createGIF(frames) {
     console.log("Frames", frames)
     frames.forEach(frame => {
         console.log("Adding frame")
-        gif.addFrame(frame, { delay: delay }); // Add each frame to the GIF
+        gif.addFrame(frame.img, { delay: frame.delay }); // Add each frame to the GIF
     });
 
     // Finalize the GIF and trigger the finished event
