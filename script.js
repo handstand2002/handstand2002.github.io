@@ -1,5 +1,8 @@
 let animationId;
 let startTime;
+let requestFrameRate;
+let actualFrameRate;
+
 const frames = [];
 const canvas = document.getElementById('diagramCanvas');
 const ctx = canvas.getContext('2d');
@@ -353,6 +356,7 @@ function parseYAML(yamlText) {
     const doc = jsyaml.load(yamlText);
     let modeName = doc.mode;
     let mode = validateMode(modeName);
+    requestFrameRate = (doc.config || {}).frameRate || 30
 
     return mode.parse(doc)
 }
@@ -440,6 +444,13 @@ function drawDiagram(objectsAndTransitions) {
     });
 }
 
+function effectiveRateHigherThanDesired(startTime) {
+  let elapsedTime = Date.now() - startTime
+  let rateIfRenderedNow = (frames.length + 1) / (elapsedTime / 1000)
+  let rateHigherThanDesired = rateIfRenderedNow > requestFrameRate
+  return rateHigherThanDesired
+}
+
 // Function to animate properties during transitions
 function animateDiagram(objectsAndTransitions) {
 
@@ -459,8 +470,8 @@ function animateDiagram(objectsAndTransitions) {
     let lastFrameTime = 0;
 
     function animate() {
-        while (Date.now() - lastFrameTime < 20) {
-            // do nothing
+        while (effectiveRateHigherThanDesired(startTime)) {
+          // do nothing
         }
         const elapsedTime = Date.now() - startTime;
         lastFrameTime = Date.now()
@@ -522,10 +533,10 @@ function animateDiagram(objectsAndTransitions) {
         frames.push(ctx.getImageData(0, 0, canvas.width, canvas.height)); // Capture the frame
 
         if (elapsedTime < animationDuration) {
-            animationId = requestAnimationFrame(animate);
+          animationId = requestAnimationFrame(animate);
         } else {
-            // End of animation, finalize frames
-            // createGIF(frames);
+          actualFrameRate = frames.length / ((Date.now() - startTime) / 1000)
+          console.log("Effective frame rate: " + actualFrameRate)
         }
     }
 
@@ -596,19 +607,21 @@ function interpolateCustom(strategy, startPos, endPos, progress) {
 
 // Function to generate GIF from captured frames
 function createGIF(frames) {
+    let delay = 1000 / actualFrameRate
+    console.log("Delay between frames: " + delay)
     const gif = new GIF({
         workers: 2,
         quality: 10,
         width: canvas.width,
         height: canvas.height,
-        delay: 20, // Delay between frames in ms
+        delay: delay, // Delay between frames in ms
         workerScript: 'gif.worker.js'
     });
 
     console.log("Frames", frames)
     frames.forEach(frame => {
         console.log("Adding frame")
-        gif.addFrame(frame, { delay: 20 }); // Add each frame to the GIF
+        gif.addFrame(frame, { delay: delay }); // Add each frame to the GIF
     });
 
     // Finalize the GIF and trigger the finished event

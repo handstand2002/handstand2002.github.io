@@ -1,6 +1,7 @@
 mode: STEP
 
 config:
+  frameRate: 30
   step:
     duration:
       # default duration for a step
