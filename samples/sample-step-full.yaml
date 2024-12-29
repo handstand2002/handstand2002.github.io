@@ -1,0 +1,133 @@
+mode: STEP
+
+config:
+  step:
+    duration:
+      # default duration for a step
+      default: 1000
+      max: 3000
+      # With >1, the more objects that are moved in a step the longer the step will take, to give
+      # viewers more time to understand
+      objCountCoefficient: 1.1
+    interval:
+      # default interval between steps (
+      default: 500
+      max: 3000
+      # With >1, the more objects that were moved in the previous step, the longer the interval
+      # is between steps, to give viewers more time to understand
+      objCountCoefficient: 1.1
+
+objects:
+  - name: producer
+    icon:
+      shape: rectangle
+      height: 30
+      width: 90
+      color: "#BBBBFF"
+    label:
+      value: Producer
+      offsetX: 10
+      offsetY: 20
+      font: '17px Arial'
+      style: bold
+      color: black
+    position:
+      x: 150
+      y: 10
+  - name: p0
+    icon:
+      shape: database
+      height: 60
+      width: 60
+      color: "#99CC99"
+    label:
+      value: P0
+      offsetX: -10
+      offsetY: 5
+      font: '17px Arial'
+      style: bold
+      color: black
+    position:
+      x: 150
+      y: 300
+  - name: p1
+    icon:
+      shape: database
+      height: 60
+      width: 60
+      color: "#BBBBFF"
+    label:
+      value: P1
+      offsetX: -10
+      offsetY: 5
+      font: '17px Arial'
+      style: bold
+      color: black
+    position:
+      x: 250
+      y: 300
+  - name: d1
+    icon:
+      shape: rectangle
+      height: 20
+      width: 20
+      color: "#BBBBFF"
+      outline:
+        thickness: 0
+    position:
+      x: 200
+      y: 10
+      z: 999
+  - name: d2
+    icon:
+      shape: rectangle
+      height: 20
+      width: 20
+      color: "#99CC99"
+      outline:
+        thickness: 0
+    position:
+      x: 200
+      y: 10
+      z: 999
+  - name: d3
+    icon:
+      shape: rectangle
+      height: 20
+      width: 20
+      color: "#99CC99"
+      outline:
+        thickness: 0
+    position:
+      x: 200
+      y: 10
+      z: 999
+
+steps:
+  - transitions:
+      - name: d1
+        position:
+          x.start: 200
+          x.end: 220
+          y.start: 10
+          y.end: 315
+      - name: d2
+        position:
+          x.start: 200
+          x.end: 150
+          y.start: 10
+          y.end: 315
+  - transitions:
+      - name: d2
+        position:
+          x.start: 200
+          x.end: 150
+          y.start: 10
+          y.end: 315
+  - transitions:
+      - name: d1
+        position:
+          x.start: 200
+          x.end: 220
+          y.start: 10
+          y.end: 315

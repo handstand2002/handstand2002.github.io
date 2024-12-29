@@ -51,16 +51,43 @@ function parsePlain(doc) {
   return {elements: elements, transitions: transitions}
 }
 
+function getStepConfig(doc) {
+  let config = (doc.config || {}).step || {}
+  if (typeof config !== 'object') {
+    config = {}
+  }
+  let durationConfig = config.duration || {}
+  let intervalConfig = config.interval || {}
+  return {
+    duration: {
+      default: durationConfig.default || 1000,
+      max: durationConfig.max || 2000,
+      objCountCoefficient: durationConfig.objCountCoefficient || 1.2
+    },
+    interval: {
+      default: intervalConfig.default || 1000,
+      max: intervalConfig.max || 2000,
+      /* The more objects that are moved in the preceding step, the longer the interval is
+         between steps - to give viewers more time to grok */
+      objCountCoefficient: intervalConfig.objCountCoefficient || 1.2
+    }
+  }
+}
+
 function parseStep(doc) {
   let elements = doc.objects || [];
   let steps = doc.steps || [];
+  let config = getStepConfig(doc);
 
   preProcessElements(elements);
 
   let transitions = [];
-  let nextTransitionStart = 2000
+  let nextTransitionStart = config.interval.default
+
   steps.forEach(st => {
     let stepTransitions = st.transitions || []
+    transitionEnd = nextTransitionStart + calculateTransitionEnd(config.duration, stepTransitions.length)
+
     stepTransitions.forEach(tr => {
       if (typeof tr.timeStart !== 'undefined') {
         throw new Error("timeStart not valid for step mode")
@@ -69,15 +96,22 @@ function parseStep(doc) {
         throw new Error("timeEnd not valid for step mode")
       }
       tr.timeStart = nextTransitionStart
-      tr.timeEnd = nextTransitionStart + 2000
+      tr.timeEnd = transitionEnd
       preProcessTransition(tr)
       transitions.push(tr)
     })
-    // TODO: formula that takes into account the max distance an object needs to move, and number of objects moving
-    nextTransitionStart += 3000
+    let durationFromCoefficient = config.interval.default * Math.pow(config.interval.objCountCoefficient, stepTransitions.length-1)
+    nextTransitionStart = transitionEnd + Math.min(durationFromCoefficient, config.interval.max)
   })
+  console.log("Derived transitions", transitions)
 
   return {elements: elements, transitions: transitions}
+}
+
+function calculateTransitionEnd(durationConfig, objCount) {
+  let durationFromCoefficient = durationConfig.default * Math.pow(durationConfig.objCountCoefficient, objCount-1)
+  let effectiveDuration = Math.min(durationFromCoefficient, durationConfig.max)
+  return effectiveDuration
 }
 
 const EXPECTED_PROPERTIES = {
