@@ -10,6 +10,76 @@ const yamlInput = document.getElementById("yamlInput");
 const yamlDefaultsDisplay = document.getElementById("yamlDefaultsDisplay");
 const yamlText = () => yamlInput.value;
 
+const VALID_MODES = [
+  {name: "PLAIN", parse: parsePlain},
+  {name: "STEP", parse: parseStep}
+]
+
+function preProcessElements(elements) {
+  let i = 0;
+  elements.forEach(el => {
+      el.defineOrder = i++
+      // Validate against expected properties
+      setDefaults(el, EXPECTED_PROPERTIES.object, "object.");
+      warnUnexpectedProps(el, EXPECTED_PROPERTIES.object, "object.");
+      errorMissingRequiredProps(el, EXPECTED_PROPERTIES.object, "object.")
+      errorExtraneousProps(el, EXPECTED_PROPERTIES.object, "object.")
+      applyTransforms(el, EXPECTED_PROPERTIES.object, "object.")
+
+//        console.log("Element from yml: ", el)
+  });
+}
+
+function preProcessTransition(tr) {
+// TODO: make extraneous properties display warnings
+  setDefaults(tr, EXPECTED_PROPERTIES.transition, "transition.");
+//  warnUnexpectedProps(tr, EXPECTED_PROPERTIES.transition, "transition.");
+//  errorMissingRequiredProps(tr, EXPECTED_PROPERTIES.transition, "transition.")
+//  errorExtraneousProps(tr, EXPECTED_PROPERTIES.transition, "transition.")
+  applyTransforms(tr, EXPECTED_PROPERTIES.transition, "transition.")
+}
+
+function parsePlain(doc) {
+  let elements = doc.objects || [];
+  let transitions = doc.transitions || [];
+  preProcessElements(elements);
+
+  transitions.forEach(tr => {
+    // Validate transitions against expected properties
+    preProcessTransition(tr)
+  });
+  return {elements: elements, transitions: transitions}
+}
+
+function parseStep(doc) {
+  let elements = doc.objects || [];
+  let steps = doc.steps || [];
+
+  preProcessElements(elements);
+
+  let transitions = [];
+  let nextTransitionStart = 2000
+  steps.forEach(st => {
+    let stepTransitions = st.transitions || []
+    stepTransitions.forEach(tr => {
+      if (typeof tr.timeStart !== 'undefined') {
+        throw new Error("timeStart not valid for step mode")
+      }
+      if (typeof tr.timeEnd !== 'undefined') {
+        throw new Error("timeEnd not valid for step mode")
+      }
+      tr.timeStart = nextTransitionStart
+      tr.timeEnd = nextTransitionStart + 2000
+      preProcessTransition(tr)
+      transitions.push(tr)
+    })
+    // TODO: formula that takes into account the max distance an object needs to move, and number of objects moving
+    nextTransitionStart += 3000
+  })
+
+  return {elements: elements, transitions: transitions}
+}
+
 const EXPECTED_PROPERTIES = {
     object: {
         name: { required: true },
@@ -42,6 +112,7 @@ const EXPECTED_PROPERTIES = {
         name: { required: true },
         timeStart: { required: true },
         timeEnd: { required: true },
+        strategy: { default: 'cosine' },
         position: {
             'x.start': { required: false },
             'x.end': { required: false },
@@ -178,7 +249,12 @@ function setDefaults(obj, expectedStructure, path = "", diagramObj) {
 
 // Load YAML button
 document.getElementById("loadYAMLButton").addEventListener("click", function () {
-    parseYamlAndRender(yamlText());
+    try {
+        parseYamlAndRender(yamlText());
+    } catch (error) {
+        console.error("Error parsing YAML: " + error.message)
+        throw error
+    }
 });
 
 // Animate button
@@ -222,36 +298,31 @@ function parseYamlAndRender(yamlText) {
     }
 }
 
+function validateMode(mode) {
+  if (typeof mode === 'undefined') {
+    throw new Error("required property 'mode' not defined")
+  }
+  let modeNames = [];
+  for (let key in VALID_MODES) {
+    let validMode = VALID_MODES[key]
+    if (validMode.name == mode) {
+      return validMode
+    }
+    modeNames.push(validMode.name)
+  }
+  let errMsg = "required property 'mode' must be one of " + modeNames
+  console.error(errMsg)
+  throw new Error(errMsg)
+}
+
 // Function to parse YAML input, apply defaults, and validate properties
 function parseYAML(yamlText) {
 
     const doc = jsyaml.load(yamlText);
-    let elements = doc.objects || [];
-    let transitions = doc.transitions || [];
+    let modeName = doc.mode;
+    let mode = validateMode(modeName);
 
-    let i = 0;
-    elements.forEach(el => {
-        el.defineOrder = i++
-        // Validate against expected properties
-        setDefaults(el, EXPECTED_PROPERTIES.object, "object.");
-        warnUnexpectedProps(el, EXPECTED_PROPERTIES.object, "object.");
-        errorMissingRequiredProps(el, EXPECTED_PROPERTIES.object, "object.")
-        errorExtraneousProps(el, EXPECTED_PROPERTIES.object, "object.")
-        applyTransforms(el, EXPECTED_PROPERTIES.object, "object.")
-
-        console.log("Element from yml: ", el)
-    });
-
-    // TODO: make extraneous properties display warnings
-    transitions.forEach(tr => {
-        // Validate transitions against expected properties
-        setDefaults(tr, EXPECTED_PROPERTIES.transition, "transition.");
-//            warnUnexpectedProps(tr, EXPECTED_PROPERTIES.transition, "transition.");
-//            errorMissingRequiredProps(tr, EXPECTED_PROPERTIES.transition, "transition.")
-//            errorExtraneousProps(tr, EXPECTED_PROPERTIES.transition, "transition.")
-        applyTransforms(tr, EXPECTED_PROPERTIES.transition, "transition.")
-    });
-    return {elements: elements, transitions: transitions}
+    return mode.parse(doc)
 }
 
 // Filter properties to remove extraneous fields based on allowed properties
