@@ -1,7 +1,5 @@
 let animationId;
 let startTime;
-// TODO: make duration configurable by user
-const animationDuration = 10000; // Adjust as needed for longer/shorter animations
 const frames = [];
 const canvas = document.getElementById('diagramCanvas');
 const ctx = canvas.getContext('2d');
@@ -444,10 +442,18 @@ function drawDiagram(objectsAndTransitions) {
 
 // Function to animate properties during transitions
 function animateDiagram(objectsAndTransitions) {
+
     const {elements, transitions} = objectsAndTransitions;
     if (animationId) {
         cancelAnimationFrame(animationId);
     }
+    let lastTransitionEnd = 0
+    transitions.forEach(tr => {
+      lastTransitionEnd = Math.max(lastTransitionEnd, tr.timeEnd)
+    })
+    const animationDuration = lastTransitionEnd + 2000
+    console.log("Animation will be " + animationDuration + "ms")
+
     startTime = Date.now();
     frames.length = 0; // Clear previous frames
     let lastFrameTime = 0;
