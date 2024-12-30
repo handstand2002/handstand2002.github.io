@@ -16,11 +16,12 @@ const VALID_MODES = [
   {name: "STEP", parse: parseStep}
 ]
 
-function preProcessElements(elements) {
+function preProcessElements(elements, anchors) {
   let i = 0;
   elements.forEach(el => {
       el.defineOrder = i++
       // Validate against expected properties
+      applyAnchorPositionToObj(el, anchors)
       setDefaults(el, EXPECTED_PROPERTIES.object, "object.");
       warnUnexpectedProps(el, EXPECTED_PROPERTIES.object, "object.");
       errorMissingRequiredProps(el, EXPECTED_PROPERTIES.object, "object.")
@@ -31,8 +32,59 @@ function preProcessElements(elements) {
   });
 }
 
-function preProcessTransition(tr) {
+function applyAnchorPositionToObj(el, anchors) {
+  if (typeof el.position.anchor === 'undefined') {
+    return
+  }
+  let anchor = findAnchor(el.position.anchor, anchors)
+  if (typeof anchor !== 'undefined') {
+    if (typeof el.position.x === 'undefined') {
+      el.position.x = anchor.x
+    }
+    if (typeof el.position.y === 'undefined') {
+      el.position.y = anchor.y
+    }
+  }
+}
+
+function applyAnchorPositionToTransition(tr, anchors) {
+  if (typeof (tr.position || {})['anchor.start'] !== 'undefined') {
+    let anchor = findAnchor(tr.position['anchor.start'], anchors)
+    if (typeof anchor !== 'undefined') {
+      if (typeof tr.position['x.start'] === 'undefined') {
+        tr.position['x.start'] = anchor.x
+      }
+      if (typeof tr.position['y.start'] === 'undefined') {
+        tr.position['y.start'] = anchor.y
+      }
+    }
+  }
+  if (typeof (tr.position || {})['anchor.end'] !== 'undefined') {
+    let anchor = findAnchor(tr.position['anchor.end'], anchors)
+    if (typeof anchor !== 'undefined') {
+      if (typeof tr.position['x.end'] === 'undefined') {
+        tr.position['x.end'] = anchor.x
+      }
+      if (typeof tr.position['y.end'] === 'undefined') {
+        tr.position['y.end'] = anchor.y
+      }
+    }
+  }
+}
+
+function findAnchor(name, allAnchors) {
+  for (key in allAnchors) {
+    let anchor = allAnchors[key]
+    if (anchor.name == name) {
+      return anchor
+    }
+  }
+  return null
+}
+
+function preProcessTransition(tr, anchors) {
 // TODO: make extraneous properties display warnings
+  applyAnchorPositionToTransition(tr, anchors)
   setDefaults(tr, EXPECTED_PROPERTIES.transition, "transition.");
 //  warnUnexpectedProps(tr, EXPECTED_PROPERTIES.transition, "transition.");
 //  errorMissingRequiredProps(tr, EXPECTED_PROPERTIES.transition, "transition.")
@@ -42,12 +94,13 @@ function preProcessTransition(tr) {
 
 function parsePlain(doc) {
   let elements = doc.objects || [];
+  let anchors = doc.anchors || [];
   let transitions = doc.transitions || [];
-  preProcessElements(elements);
+  preProcessElements(elements, anchors);
 
   transitions.forEach(tr => {
     // Validate transitions against expected properties
-    preProcessTransition(tr)
+    preProcessTransition(tr, anchors)
   });
   return {elements: elements, transitions: transitions}
 }
@@ -78,9 +131,10 @@ function getStepConfig(doc) {
 function parseStep(doc) {
   let elements = doc.objects || [];
   let steps = doc.steps || [];
+  let anchors = doc.anchors || [];
   let config = getStepConfig(doc);
 
-  preProcessElements(elements);
+  preProcessElements(elements, anchors);
 
   let transitions = [];
   let nextTransitionStart = config.interval.default
@@ -98,13 +152,12 @@ function parseStep(doc) {
       }
       tr.timeStart = nextTransitionStart
       tr.timeEnd = transitionEnd
-      preProcessTransition(tr)
+      preProcessTransition(tr, anchors)
       transitions.push(tr)
     })
     let durationFromCoefficient = config.interval.default * Math.pow(config.interval.objCountCoefficient, stepTransitions.length-1)
     nextTransitionStart = transitionEnd + Math.min(durationFromCoefficient, config.interval.max)
   })
-  console.log("Derived transitions", transitions)
 
   return {elements: elements, transitions: transitions}
 }
@@ -132,7 +185,8 @@ const EXPECTED_PROPERTIES = {
         position: {
             x: { default: 0 },
             y: { default: 0 },
-            z: { default: 1000 }
+            z: { default: 1000 },
+            anchor: { required: false } /* may be used instead of x,y */
         },
         label: {
             offsetX: { default: 10 },
@@ -155,6 +209,8 @@ const EXPECTED_PROPERTIES = {
             'y.end': { required: false },
             'z.start': { required: false },
             'z.end': { required: false },
+            'anchor.start': { required: false },
+            'anchor.end': { required: false },
         },
         label: {
             'offsetX.start': { required: false },
@@ -736,8 +792,6 @@ function drawDog(ctx, x, y, size) {
     ctx.lineWidth = 1;
     ctx.stroke();
 }
-
-
 
 function drawStar(ctx, x, y, size) {
     const spikes = 5;

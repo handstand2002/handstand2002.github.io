@@ -18,6 +18,19 @@ config:
       # is between steps, to give viewers more time to understand
       objCountCoefficient: 1.1
 
+# instead of specifying coordinates manually, either transitions or objects can reference
+# a pre-defined anchor
+anchors:
+  - name: p0
+    x: 140
+    y: 315
+  - name: p1
+    x: 240
+    y: 315
+  - name: producer
+    x: 185
+    y: 15
+
 objects:
   - name: producer
     icon:
@@ -67,6 +80,18 @@ objects:
     position:
       x: 250
       y: 300
+  - name: d0
+    icon:
+      shape: rectangle
+      height: 20
+      width: 20
+      color: "#99CC99"
+      outline:
+        thickness: 0
+    position:
+      # use anchor instead of specifying x/y manually
+      anchor: producer
+      z: 999
   - name: d1
     icon:
       shape: rectangle
@@ -79,56 +104,43 @@ objects:
       x: 200
       y: 10
       z: 999
-  - name: d2
-    icon:
-      shape: rectangle
-      height: 20
-      width: 20
-      color: "#99CC99"
-      outline:
-        thickness: 0
-    position:
-      x: 200
-      y: 10
-      z: 999
-  - name: d3
-    icon:
-      shape: rectangle
-      height: 20
-      width: 20
-      color: "#99CC99"
-      outline:
-        thickness: 0
-    position:
-      x: 200
-      y: 10
-      z: 999
 
 steps:
   - transitions:
+      - name: d0
+        position:
+          # manual coordinates may be used for transitions
+          x.start: 200
+          y.start: 10
+          x.end: 150
+          y.end: 315
       - name: d1
         position:
           x.start: 200
+          y.start: 10
           x.end: 220
-          y.start: 10
-          y.end: 315
-      - name: d2
-        position:
-          x.start: 200
-          x.end: 150
-          y.start: 10
           y.end: 315
   - transitions:
-      - name: d2
+      - name: d0
         position:
-          x.start: 200
-          x.end: 150
-          y.start: 10
-          y.end: 315
+          # anchors can be used instead of manual coordinates
+          anchor.start: producer
+          anchor.end: p0
   - transitions:
       - name: d1
         position:
+          # manual coordinates take precedence over anchors
           x.start: 200
-          x.end: 220
           y.start: 10
-          y.end: 315
+          anchor.start: producer
+          anchor.end: p1
+  - transitions:
+      - name: d0
+        position:
+          anchor.start: producer
+          anchor.end: p0
+  - transitions:
+      - name: d1
+        position:
+          anchor.start: producer
+          anchor.end: p1
