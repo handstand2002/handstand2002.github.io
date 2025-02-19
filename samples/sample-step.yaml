@@ -1,3 +1,7 @@
+canvas:
+  height: 400
+  width: 400
+
 mode: STEP
 objects:
   - name: producer
