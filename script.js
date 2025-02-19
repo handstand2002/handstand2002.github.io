@@ -381,12 +381,24 @@ const allowedShapeProperties = {
 
 function parseYamlAndRender(yamlText) {
     try {
+        setCanvasSize(yamlText);
         objectsAndTransitions = parseYAML(yamlText)
         drawDiagram(objectsAndTransitions)
     } catch (error) {
         console.error('Error parsing YAML: ' + error.message);
         throw error
     }
+}
+
+function setCanvasSize(yamlText) {
+    const doc = jsyaml.load(yamlText);
+    let canvas = (doc.canvas || {})
+    console.log("canvas: ", canvas)
+    width = (canvas.width || 400)
+    height = (canvas.height || 400)
+    let canvasElement = document.getElementById("diagramCanvas");
+    canvasElement.height = height;
+    canvasElement.width = width;
 }
 
 function validateMode(mode) {

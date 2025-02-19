@@ -1,3 +1,7 @@
+canvas:
+  height: 400
+  width: 400
+
 mode: STEP
 
 config:
@@ -11,7 +15,7 @@ config:
       # viewers more time to understand
       objCountCoefficient: 1.1
     interval:
-      # default interval between steps (
+      # default interval between steps
       default: 500
       max: 3000
       # With >1, the more objects that were moved in the previous step, the longer the interval

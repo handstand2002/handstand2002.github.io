@@ -1,3 +1,9 @@
+canvas:
+  height: 400
+  width: 400
+
+mode: PLAIN
+
 objects:
   - name: producer
     icon:
