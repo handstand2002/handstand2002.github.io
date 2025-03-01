@@ -2,6 +2,7 @@ let animationId;
 let startTime;
 let requestFrameRate;
 let actualFrameRate;
+let ctxBackground;
 
 const frames = [];
 const canvas = document.getElementById('diagramCanvas');
@@ -381,7 +382,7 @@ const allowedShapeProperties = {
 
 function parseYamlAndRender(yamlText) {
     try {
-        setCanvasSize(yamlText);
+        setCanvas(yamlText);
         objectsAndTransitions = parseYAML(yamlText)
         drawDiagram(objectsAndTransitions)
     } catch (error) {
@@ -390,15 +391,24 @@ function parseYamlAndRender(yamlText) {
     }
 }
 
-function setCanvasSize(yamlText) {
+function setCanvas(yamlText) {
     const doc = jsyaml.load(yamlText);
-    let canvas = (doc.canvas || {})
-    console.log("canvas: ", canvas)
-    width = (canvas.width || 400)
-    height = (canvas.height || 400)
-    let canvasElement = document.getElementById("diagramCanvas");
-    canvasElement.height = height;
-    canvasElement.width = width;
+    let canvasConfig = (doc.canvas || {})
+    width = (canvasConfig.width || 400)
+    height = (canvasConfig.height || 400)
+    canvas.height = height;
+    canvas.width = width;
+    if (typeof (canvasConfig.background || {}).color != 'undefined') {
+      ctxBackground = () => {
+        ctx.fillStyle = canvasConfig.background.color;
+        ctx.fillRect(0, 0, width, height);
+      }
+      console.log("Setting background color to ", canvasConfig.background.color)
+      ctx.fillStyle = canvasConfig.background.color;
+      console.log("Set ctx fill style to " + ctx.fillStyle)
+      console.log("ctx ", ctx)
+      ctx.fillRect(0, 0, width, height);
+    }
 }
 
 function validateMode(mode) {
@@ -444,6 +454,8 @@ function filterProperties(shape, allowedProperties) {
 function drawDiagram(objectsAndTransitions) {
     const {elements, transitions} = objectsAndTransitions;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctxBackground()
+    // TODO: add background
 
     elementsCopy = [];
 
