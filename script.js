@@ -403,11 +403,8 @@ function setCanvas(yamlText) {
         ctx.fillStyle = canvasConfig.background.color;
         ctx.fillRect(0, 0, width, height);
       }
-      console.log("Setting background color to ", canvasConfig.background.color)
-      ctx.fillStyle = canvasConfig.background.color;
-      console.log("Set ctx fill style to " + ctx.fillStyle)
-      console.log("ctx ", ctx)
-      ctx.fillRect(0, 0, width, height);
+    } else {
+      ctxBackground = () => {}
     }
 }
 
@@ -449,13 +446,11 @@ function filterProperties(shape, allowedProperties) {
     }, {});
 }
 
-
 // Drawing Functions
 function drawDiagram(objectsAndTransitions) {
     const {elements, transitions} = objectsAndTransitions;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctxBackground()
-    // TODO: add background
 
     elementsCopy = [];
 
