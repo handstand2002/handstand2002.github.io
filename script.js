@@ -27,12 +27,6 @@ const VALID_MODES = [
   {name: "STEP", parse: parseStep}
 ]
 
-/*
-TODO: color palettes
-TODO: template transitions ("from a to b" is defined elsewhere as msg_produce, transition just says "apply msg_produce to o1"
-TODO: template styles (style "event" defined elsewhere, apply it to many objects. objects can have multiple styles)
-*/
-
 function preProcessElements(elements, anchors) {
   let i = 0;
   elements.forEach(el => {
