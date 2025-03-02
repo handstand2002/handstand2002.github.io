@@ -1,6 +1,16 @@
 canvas:
   height: 400
   width: 400
+  background:
+    color: "#CCCCCC"
+
+# Available palettes:
+#     river-nights
+#     dutch-field
+#     retro-metro
+#     spring-pastels
+color:
+  palette: spring-pastels
 
 mode: STEP
 

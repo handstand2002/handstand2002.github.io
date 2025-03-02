@@ -3,6 +3,16 @@ let startTime;
 let requestFrameRate;
 let actualFrameRate;
 let ctxBackground;
+let currentColors;
+
+// palettes from https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
+const defaultPalette = 'river-nights'
+const colorPalettes = {
+  'river-nights':   ["#b30000", "#7c1158", "#4421af", "#1a53ff", "#0d88e6", "#00b7c7", "#5ad45a", "#8be04e", "#ebdc78"],
+  'dutch-field':    ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"],
+  'retro-metro':    ["#ea5545", "#f46a9b", "#ef9b20", "#edbf33", "#ede15b", "#bdcf32", "#87bc45", "#27aeef", "#b33dc6"],
+  'spring-pastels': ["#fd7f6f", "#7eb0d5", "#b2e061", "#bd7ebe", "#ffb55a", "#ffee65", "#beb9db", "#fdcce5", "#8bd3c7"]
+}
 
 const frames = [];
 const canvas = document.getElementById('diagramCanvas');
@@ -17,6 +27,12 @@ const VALID_MODES = [
   {name: "STEP", parse: parseStep}
 ]
 
+/*
+TODO: color palettes
+TODO: template transitions ("from a to b" is defined elsewhere as msg_produce, transition just says "apply msg_produce to o1"
+TODO: template styles (style "event" defined elsewhere, apply it to many objects. objects can have multiple styles)
+*/
+
 function preProcessElements(elements, anchors) {
   let i = 0;
   elements.forEach(el => {
@@ -28,8 +44,6 @@ function preProcessElements(elements, anchors) {
       errorMissingRequiredProps(el, EXPECTED_PROPERTIES.object, "object.")
       errorExtraneousProps(el, EXPECTED_PROPERTIES.object, "object.")
       applyTransforms(el, EXPECTED_PROPERTIES.object, "object.")
-
-//        console.log("Element from yml: ", el)
   });
 }
 
@@ -176,9 +190,9 @@ const EXPECTED_PROPERTIES = {
             shape: { required: true },
             outline: {
                 thickness: { default: 1 },
-                color: { default: "black", transform: c => standardizeColor(c) }
+                color: { default: "black", transform: c => normalizeColor(c) }
             },
-            color: { default: "black", transform: c => standardizeColor(c) },
+            color: { default: "black", transform: c => normalizeColor(c) },
             size: { default: 50, allowed: (i) => ['star', 'cat', 'dog'].indexOf(i.icon?.shape) != -1}, // Optional, depending on the shape type
             width: { default: 50, allowed: (i) => ['rectangle', 'cloud', 'database', 'line', 'line-arrow', 'arrow'].indexOf(i.icon?.shape) != -1 },
             height: { default: 50, allowed: (i) => ['rectangle', 'cloud', 'database', 'line', 'line-arrow', 'arrow'].indexOf(i.icon?.shape) != -1 }
@@ -194,7 +208,7 @@ const EXPECTED_PROPERTIES = {
             offsetY: { default: 10 },
             font: { default: '14px Arial' },
             style: { default: 'normal' },
-            color: { default: 'black', transform: c => standardizeColor(c) },
+            color: { default: 'black', transform: c => normalizeColor(c) },
             value: { default: '' }
         }
     },
@@ -218,12 +232,12 @@ const EXPECTED_PROPERTIES = {
             'offsetX.end': { required: false },
             'offsetY.start': { required: false },
             'offsetY.end': { required: false },
-            'color.start': { required: false, transform: c => standardizeColor(c) },
-            'color.end': { required: false, transform: c => standardizeColor(c) }
+            'color.start': { required: false, transform: c => normalizeColor(c) },
+            'color.end': { required: false, transform: c => normalizeColor(c) }
         },
         icon: {
-            'color.start': { required: false, transform: c => standardizeColor(c) },
-            'color.end': { required: false, transform: c => standardizeColor(c) },
+            'color.start': { required: false, transform: c => normalizeColor(c) },
+            'color.end': { required: false, transform: c => normalizeColor(c) },
             'size.start': { required: false },
             'size.end': { required: false },
             'height.start': { required: false },
@@ -233,8 +247,8 @@ const EXPECTED_PROPERTIES = {
             outline: {
                 'thickness.start': { required: false },
                 'thickness.end': { required: false },
-                'color.start': { required: false, transform: c => standardizeColor(c) },
-                'color.end': { required: false, transform: c => standardizeColor(c) }
+                'color.start': { required: false, transform: c => normalizeColor(c) },
+                'color.end': { required: false, transform: c => normalizeColor(c) }
             }
         }
     }
@@ -382,6 +396,7 @@ const allowedShapeProperties = {
 
 function parseYamlAndRender(yamlText) {
     try {
+        setColors(yamlText);
         setCanvas(yamlText);
         objectsAndTransitions = parseYAML(yamlText)
         drawDiagram(objectsAndTransitions)
@@ -389,6 +404,17 @@ function parseYamlAndRender(yamlText) {
         console.error('Error parsing YAML: ' + error.message);
         throw error
     }
+}
+
+function setColors(yamlText) {
+  const doc = jsyaml.load(yamlText);
+  let paletteName = (doc.color || {}).palette || defaultPalette
+  currentColors = colorPalettes[paletteName];
+  if (typeof currentColors == 'undefined') {
+    console.log("Unsupported palette name: " + paletteName + "; Available palettes: ", colorPalettes)
+    throw new Error("Unsupported palette name")
+  }
+  console.debug("Using color palette " + paletteName, currentColors)
 }
 
 function setCanvas(yamlText) {
@@ -399,8 +425,9 @@ function setCanvas(yamlText) {
     canvas.height = height;
     canvas.width = width;
     if (typeof (canvasConfig.background || {}).color != 'undefined') {
+      let normalizedColor = normalizeColor(canvasConfig.background.color);
       ctxBackground = () => {
-        ctx.fillStyle = canvasConfig.background.color;
+        ctx.fillStyle = normalizedColor;
         ctx.fillRect(0, 0, width, height);
       }
     } else {
@@ -663,7 +690,16 @@ function interpolate(strategy, startValue, endValue, progress) {
     }
 }
 
-function standardizeColor(str) {
+const isPaletteColor = /^p\d+$/
+function normalizeColor(str) {
+    if (isPaletteColor.test(str)) {
+      let idx = Number(str.substr(1))
+      let useColor = currentColors[idx]
+      if (typeof useColor === 'undefined') {
+        throw new Error("Cannot reference color " + idx + " as there are only " + currentColors.length + " colors and index is 0-based")
+      }
+      return useColor;
+    }
     var ctx = document.createElement("canvas").getContext("2d");
     ctx.fillStyle = str;
     return ctx.fillStyle;
