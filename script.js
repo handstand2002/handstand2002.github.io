@@ -91,8 +91,25 @@ function findAnchor(name, allAnchors) {
   return null
 }
 
-function preProcessTransition(tr, anchors) {
+function preProcessTransition(tr, anchors, transitionTemplates) {
 // TODO: make extraneous properties display warnings
+
+  // apply templates if they exist
+  if (Array.isArray(tr.templates) && tr.templates.length > 0) {
+    for (idx in tr.templates) {
+      let useTemplateName = tr.templates[idx]
+      if (typeof useTemplateName != "string") {
+        console.error("Expected a template name but instead found " + (typeof useTemplateName), useTemplateName)
+        throw new Error("Expected a template name but instead found " + (typeof useTemplateName))
+      }
+      let template = findTemplate(transitionTemplates, useTemplateName)
+      if (typeof template == 'undefined') {
+        throw new Error("Could not find template " + useTemplateName)
+      }
+      applyTransitionTemplate(template, tr)
+    }
+  }
+
   applyAnchorPositionToTransition(tr, anchors)
   setDefaults(tr, EXPECTED_PROPERTIES.transition, "transition.");
 //  warnUnexpectedProps(tr, EXPECTED_PROPERTIES.transition, "transition.");
@@ -101,15 +118,49 @@ function preProcessTransition(tr, anchors) {
   applyTransforms(tr, EXPECTED_PROPERTIES.transition, "transition.")
 }
 
+function applyTransitionTemplate(template, transition) {
+  for (key in template) {
+    if (key == 'name') {
+      continue
+    }
+    applyTemplateValues(template, transition, key)
+  }
+}
+
+function applyTemplateValues(template, objToApplyTo, key) {
+  if (typeof template[key] == 'object') {
+    if (typeof objToApplyTo[key] == 'undefined') {
+      objToApplyTo[key] = {}
+    }
+    for (subKey in template[key]) {
+      applyTemplateValues(template[key], objToApplyTo[key], subKey)
+    }
+  } else {
+    if (typeof objToApplyTo[key] == 'undefined') {
+      objToApplyTo[key] = template[key]
+    }
+  }
+}
+
+function findTemplate(templates, nameToFind) {
+  for (idx in templates) {
+    let t = templates[idx]
+    if (t.name == nameToFind) {
+      return t;
+    }
+  }
+}
+
 function parsePlain(doc) {
   let elements = doc.objects || [];
   let anchors = doc.anchors || [];
   let transitions = doc.transitions || [];
+  let transitionTemplates = (doc.template || {}).transition || []
   preProcessElements(elements, anchors);
 
   transitions.forEach(tr => {
     // Validate transitions against expected properties
-    preProcessTransition(tr, anchors)
+    preProcessTransition(tr, anchors, transitionTemplates)
   });
   return {elements: elements, transitions: transitions}
 }
@@ -141,6 +192,7 @@ function parseStep(doc) {
   let elements = doc.objects || [];
   let steps = doc.steps || [];
   let anchors = doc.anchors || [];
+  let transitionTemplates = (doc.template || {}).transition || [];
   let config = getStepConfig(doc);
 
   preProcessElements(elements, anchors);
@@ -161,7 +213,7 @@ function parseStep(doc) {
       }
       tr.timeStart = nextTransitionStart
       tr.timeEnd = transitionEnd
-      preProcessTransition(tr, anchors)
+      preProcessTransition(tr, anchors, transitionTemplates)
       transitions.push(tr)
     })
     let durationFromCoefficient = config.interval.default * Math.pow(config.interval.objCountCoefficient, stepTransitions.length-1)
