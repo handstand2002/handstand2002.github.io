@@ -4,6 +4,23 @@ canvas:
   background:
     color: "#FFFFFF"
 
+template:
+  transition:
+# instead of defining the transition from scratch,
+# we can just re-use a transition template
+    - name: msg_to_p0
+      position:
+        x.start: 200
+        x.end: 150
+        y.start: 10
+        y.end: 315
+    - name: msg_to_p1
+      position:
+        x.start: 200
+        x.end: 220
+        y.start: 10
+        y.end: 315
+
 mode: STEP
 objects:
   - name: producer
@@ -54,6 +71,18 @@ objects:
     position:
       x: 250
       y: 300
+  - name: d0
+    icon:
+      shape: rectangle
+      height: 20
+      width: 20
+      color: "#99CC99"
+      outline:
+        thickness: 0
+    position:
+      x: 200
+      y: 10
+      z: 999
   - name: d1
     icon:
       shape: rectangle
@@ -66,39 +95,22 @@ objects:
       x: 200
       y: 10
       z: 999
-  - name: d2
-    icon:
-      shape: rectangle
-      height: 20
-      width: 20
-      color: "#99CC99"
-      outline:
-        thickness: 0
-    position:
-      x: 200
-      y: 10
-      z: 999
 
 steps:
   - transitions:
-      - name: d1
-        position:
-          x.start: 200
-          x.end: 220
-          y.start: 10
-          y.end: 315
-  - transitions:
-      - name: d2
-        position:
-          x.start: 200
-          x.end: 150
-          y.start: 10
-          y.end: 315
+      - name: d0
+        templates:
+          - msg_to_p0
   - transitions:
       - name: d1
-        position:
-          x.start: 200
-          x.end: 220
-          y.start: 10
-          y.end: 315
+        templates:
+          - msg_to_p1
+  - transitions:
+      - name: d0
+        templates:
+          - msg_to_p0
+  - transitions:
+      - name: d1
+        templates:
+          - msg_to_p1
 

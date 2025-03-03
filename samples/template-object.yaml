@@ -4,6 +4,34 @@ canvas:
   background:
     color: "#FFFFFF"
 
+template:
+  object:
+# special template, applied to all objects
+    - name: default
+      label:
+        font: '17px Arial'
+        style: bold
+        color: black
+# custom templates
+    - name: p0
+      icon:
+        color: "#99CC99"
+    - name: p1
+      icon:
+        color: "#BBBBFF"
+    - name: msg
+      icon:
+        shape: rectangle
+        height: 20
+        width: 20
+        outline:
+          thickness: 0
+    - name: db
+      icon:
+        shape: database
+        height: 60
+        width: 60
+
 mode: STEP
 objects:
   - name: producer
@@ -16,64 +44,45 @@ objects:
       value: Producer
       offsetX: 10
       offsetY: 20
-      font: '17px Arial'
-      style: bold
-      color: black
     position:
       x: 150
       y: 10
+
   - name: p0
-    icon:
-      shape: database
-      height: 60
-      width: 60
-      color: "#99CC99"
+    templates:
+      - p0
+      - db
     label:
       value: P0
       offsetX: -10
       offsetY: 5
-      font: '17px Arial'
-      style: bold
-      color: black
     position:
       x: 150
       y: 300
   - name: p1
-    icon:
-      shape: database
-      height: 60
-      width: 60
-      color: "#BBBBFF"
+    templates:
+      - p1
+      - db
     label:
       value: P1
       offsetX: -10
       offsetY: 5
-      font: '17px Arial'
-      style: bold
-      color: black
     position:
       x: 250
       y: 300
-  - name: d1
-    icon:
-      shape: rectangle
-      height: 20
-      width: 20
-      color: "#BBBBFF"
-      outline:
-        thickness: 0
+
+  - name: d0
+    templates:
+      - p0
+      - msg
     position:
       x: 200
       y: 10
       z: 999
-  - name: d2
-    icon:
-      shape: rectangle
-      height: 20
-      width: 20
-      color: "#99CC99"
-      outline:
-        thickness: 0
+  - name: d1
+    templates:
+      - p1
+      - msg
     position:
       x: 200
       y: 10
@@ -88,7 +97,7 @@ steps:
           y.start: 10
           y.end: 315
   - transitions:
-      - name: d2
+      - name: d0
         position:
           x.start: 200
           x.end: 150

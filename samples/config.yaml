@@ -4,6 +4,25 @@ canvas:
   background:
     color: "#FFFFFF"
 
+config:
+  frameRate: 30
+  step:
+    duration:
+      # default duration for a step
+      default: 1000
+      max: 3000
+      # With >1, the more objects that are moved in a step the longer the step will take, to give
+      # viewers more time to understand
+      objCountCoefficient: 1.1
+    interval:
+      # default interval between steps
+      default: 500
+      max: 3000
+      # With >1, the more objects that were moved in the previous step, the longer the interval
+      # is between steps, to give viewers more time to understand
+      objCountCoefficient: 1.1
+
+
 mode: STEP
 objects:
   - name: producer

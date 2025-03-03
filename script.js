@@ -27,9 +27,28 @@ const VALID_MODES = [
   {name: "STEP", parse: parseStep}
 ]
 
-function preProcessElements(elements, anchors) {
+function preProcessElements(elements, anchors, templates) {
   let i = 0;
   elements.forEach(el => {
+      if (Array.isArray(el.templates) && el.templates.length > 0) {
+        for (idx in el.templates) {
+          let useTemplateName = el.templates[idx]
+          if (typeof useTemplateName != "string") {
+            console.error("Expected a template name but instead found " + (typeof useTemplateName), useTemplateName)
+            throw new Error("Expected a template name but instead found " + (typeof useTemplateName))
+          }
+          let template = findTemplate(templates, useTemplateName)
+          if (typeof template == 'undefined') {
+            throw new Error("Could not find template " + useTemplateName)
+          }
+          applyTemplate(template, el)
+        }
+      }
+      let defaultTemplate = findTemplate(templates, "default")
+      if (typeof defaultTemplate == 'object') {
+        applyTemplate(defaultTemplate, el)
+      }
+
       el.defineOrder = i++
       // Validate against expected properties
       applyAnchorPositionToObj(el, anchors)
@@ -106,7 +125,7 @@ function preProcessTransition(tr, anchors, transitionTemplates) {
       if (typeof template == 'undefined') {
         throw new Error("Could not find template " + useTemplateName)
       }
-      applyTransitionTemplate(template, tr)
+      applyTemplate(template, tr)
     }
   }
 
@@ -118,7 +137,7 @@ function preProcessTransition(tr, anchors, transitionTemplates) {
   applyTransforms(tr, EXPECTED_PROPERTIES.transition, "transition.")
 }
 
-function applyTransitionTemplate(template, transition) {
+function applyTemplate(template, transition) {
   for (key in template) {
     if (key == 'name') {
       continue
@@ -156,7 +175,8 @@ function parsePlain(doc) {
   let anchors = doc.anchors || [];
   let transitions = doc.transitions || [];
   let transitionTemplates = (doc.template || {}).transition || []
-  preProcessElements(elements, anchors);
+  let objectTemplates = (doc.template || {}).object || []
+  preProcessElements(elements, anchors, objectTemplates);
 
   transitions.forEach(tr => {
     // Validate transitions against expected properties
@@ -193,9 +213,10 @@ function parseStep(doc) {
   let steps = doc.steps || [];
   let anchors = doc.anchors || [];
   let transitionTemplates = (doc.template || {}).transition || [];
+  let objectTemplates = (doc.template || {}).object || []
   let config = getStepConfig(doc);
 
-  preProcessElements(elements, anchors);
+  preProcessElements(elements, anchors, objectTemplates);
 
   let transitions = [];
   let nextTransitionStart = config.interval.default

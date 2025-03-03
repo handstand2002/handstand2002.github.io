@@ -4,6 +4,17 @@ canvas:
   background:
     color: "#FFFFFF"
 
+anchors:
+  - name: p0
+    x: 140
+    y: 315
+  - name: p1
+    x: 240
+    y: 315
+  - name: producer
+    x: 185
+    y: 15
+
 mode: STEP
 objects:
   - name: producer
@@ -83,22 +94,16 @@ steps:
   - transitions:
       - name: d1
         position:
-          x.start: 200
-          x.end: 220
-          y.start: 10
-          y.end: 315
+          anchor.start: producer
+          anchor.end: p1
   - transitions:
       - name: d2
         position:
-          x.start: 200
-          x.end: 150
-          y.start: 10
-          y.end: 315
+          anchor.start: producer
+          anchor.end: p0
   - transitions:
       - name: d1
         position:
-          x.start: 200
-          x.end: 220
-          y.start: 10
-          y.end: 315
+          anchor.start: producer
+          anchor.end: p1
 
