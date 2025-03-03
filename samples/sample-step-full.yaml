@@ -2,13 +2,8 @@ canvas:
   height: 400
   width: 400
   background:
-    color: "#CCCCCC"
+    color: "#EEEEEE"
 
-# Available palettes:
-#     river-nights
-#     dutch-field
-#     retro-metro
-#     spring-pastels
 color:
   palette: spring-pastels
 
@@ -18,29 +13,69 @@ config:
   frameRate: 30
   step:
     duration:
-      # default duration for a step
-      default: 1000
+      default: 750
       max: 3000
-      # With >1, the more objects that are moved in a step the longer the step will take, to give
-      # viewers more time to understand
       objCountCoefficient: 1.1
     interval:
-      # default interval between steps
-      default: 500
+      default: 250
       max: 3000
-      # With >1, the more objects that were moved in the previous step, the longer the interval
-      # is between steps, to give viewers more time to understand
       objCountCoefficient: 1.1
 
-# instead of specifying coordinates manually, either transitions or objects can reference
-# a pre-defined anchor
+template:
+  object:
+    - name: default
+      label:
+        font: '17px Arial'
+        style: bold
+        color: black
+    - name: p0
+      icon:
+        color: "p0"
+    - name: p1
+      icon:
+        color: "p1"
+    - name: msg
+      icon:
+        shape: rectangle
+        height: 20
+        width: 20
+        outline:
+          thickness: 0
+    - name: db
+      icon:
+        shape: database
+        height: 60
+        width: 60
+      label:
+        offsetX: -10
+        offsetY: 5
+
+  transition:
+    - name: msg_to_p0
+      position:
+        anchor.start: producer
+        anchor.end: p0
+    - name: msg_to_p1
+      position:
+        anchor.start: producer
+        anchor.end: p1
+
 anchors:
   - name: p0
     x: 140
     y: 315
+  - name: p0_box
+    x: 150
+    y: 300
   - name: p1
     x: 240
     y: 315
+  - name: p1_box
+    x: 250
+    y: 300
+  - name: producer_box
+    x: 150
+    y: 10
   - name: producer
     x: 185
     y: 15
@@ -56,105 +91,53 @@ objects:
       value: Producer
       offsetX: 10
       offsetY: 20
-      font: '17px Arial'
-      style: bold
-      color: black
     position:
-      x: 150
-      y: 10
+      anchor: producer_box
   - name: p0
-    icon:
-      shape: database
-      height: 60
-      width: 60
-      color: "#99CC99"
+    templates:
+      - db
+      - p0
     label:
       value: P0
-      offsetX: -10
-      offsetY: 5
-      font: '17px Arial'
-      style: bold
-      color: black
     position:
-      x: 150
-      y: 300
+      anchor: p0_box
   - name: p1
-    icon:
-      shape: database
-      height: 60
-      width: 60
-      color: "#BBBBFF"
+    templates:
+      - db
+      - p1
     label:
       value: P1
-      offsetX: -10
-      offsetY: 5
-      font: '17px Arial'
-      style: bold
-      color: black
     position:
-      x: 250
-      y: 300
+      anchor: p1_box
   - name: d0
-    icon:
-      shape: rectangle
-      height: 20
-      width: 20
-      color: "#99CC99"
-      outline:
-        thickness: 0
+    templates:
+      - msg
+      - p0
     position:
-      # use anchor instead of specifying x/y manually
       anchor: producer
       z: 999
   - name: d1
-    icon:
-      shape: rectangle
-      height: 20
-      width: 20
-      color: "#BBBBFF"
-      outline:
-        thickness: 0
+    templates:
+      - msg
+      - p1
     position:
-      x: 200
-      y: 10
+      anchor: producer
       z: 999
 
 steps:
   - transitions:
       - name: d0
-        position:
-          # manual coordinates may be used for transitions
-          x.start: 200
-          y.start: 10
-          x.end: 150
-          y.end: 315
+        templates:
+          - msg_to_p0
+  - transitions:
       - name: d1
-        position:
-          x.start: 200
-          y.start: 10
-          x.end: 220
-          y.end: 315
+        templates:
+          - msg_to_p1
   - transitions:
       - name: d0
-        position:
-          # anchors can be used instead of manual coordinates
-          anchor.start: producer
-          anchor.end: p0
+        templates:
+          - msg_to_p0
   - transitions:
       - name: d1
-        position:
-          # manual coordinates take precedence over anchors
-          x.start: 200
-          y.start: 10
-          anchor.start: producer
-          anchor.end: p1
-  - transitions:
-      - name: d0
-        position:
-          anchor.start: producer
-          anchor.end: p0
-  - transitions:
-      - name: d1
-        position:
-          anchor.start: producer
-          anchor.end: p1
+        templates:
+          - msg_to_p1
