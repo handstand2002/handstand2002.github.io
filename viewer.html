@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram Animator</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+        #yamlPane, #controlsPane {
+            display: none
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script src="https://cdn.rawgit.com/jnordberg/gif.js/master/dist/gif.js"></script>
+    <script src="https://cdn.rawgit.com/jnordberg/gif.js/master/dist/gif.worker.js"></script>
+    <script src="script.js" defer></script>
+    <script>
+    window.addEventListener('load', function () {
+      if (window.location.hash) {
+        // if there is a hash in the URL, decode it into the yaml box
+        let base64 = _base64ToArrayBuffer(window.location.hash.substr(1))
+        let promisedTxt = decompress(base64)
+        promisedTxt.then((v) => {
+            input = document.getElementById("yamlInput")
+            input.value = v
+
+            parseYamlAndRender(v)
+            objectsAndTransitions = parseYAML(v)
+            drawDiagram(objectsAndTransitions)
+            animateDiagram(objectsAndTransitions);
+
+          })
+      }
+    })
+    </script>
+</head>
+<body>
+    <!-- YAML input and default properties display -->
+    <div id="yamlPane">
+        <textarea id="yamlInput"></textarea>
+        <textarea id="yamlDefaultsDisplay" placeholder="Object properties with defaults" readonly></textarea>
+    </div>
+
+    <!-- Canvas display -->
+    <div id="canvasPane" style="width:100%;height:100%">
+        <canvas id="diagramCanvas" width="400" height="400"></canvas>
+    </div>
+
+    <!-- Control buttons -->
+    <div id="controlsPane">
+        <button id="loadYAMLButton">Load YAML</button>
+        <button id="animateButton">Animate</button>
+        <button id="generateGIFButton">Generate GIF</button>
+    </div>
+</body>
+</html>

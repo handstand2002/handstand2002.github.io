@@ -106,16 +106,28 @@
     <script src="https://cdn.rawgit.com/jnordberg/gif.js/master/dist/gif.worker.js"></script>
     <script src="script.js" defer></script>
     <script>
+    window.addEventListener('load', function () {
       const url = "samples/sample-step.yaml"
       const options = { headers: {} };
-      fetch(url, options)
-        .then(function(response) {
-          response.text().then(function(text) {
+      if (window.location.hash) {
+        // if there is a hash in the URL, decode it into the yaml box
+        let base64 = _base64ToArrayBuffer(window.location.hash.substr(1))
+        let promisedTxt = decompress(base64)
+        promisedTxt.then((v) => {
             input = document.getElementById("yamlInput")
-            text = text.replace(/(?:\r\n|\r|\n)/g, "\n");
-            input.value = text
+            input.value = v
+          })
+      } else {
+        fetch(url, options)
+          .then(function(response) {
+            response.text().then(function(text) {
+              input = document.getElementById("yamlInput")
+              text = text.replace(/(?:\r\n|\r|\n)/g, "\n");
+              input.value = text
+            });
           });
-        });
+      }
+    })
     </script>
 </head>
 <body>

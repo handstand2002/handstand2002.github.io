@@ -402,7 +402,13 @@ function setDefaults(obj, expectedStructure, path = "", diagramObj) {
 // Load YAML button
 document.getElementById("loadYAMLButton").addEventListener("click", function () {
     try {
-        parseYamlAndRender(yamlText());
+        let yml = yamlText()
+        parseYamlAndRender(yml);
+        compress(yml).then((v) => {
+          let base64 = _arrayBufferToBase64(v)
+          window.location.hash = '#' + base64
+          console.log("Base64", base64)
+        })
     } catch (error) {
         console.error("Error parsing YAML: " + error.message)
         throw error
@@ -702,6 +708,7 @@ function animateDiagram(objectsAndTransitions) {
 
     animate();
 }
+// TODO: create a 'animateInfinite' method that repeats the animation infinitely
 
 // Color interpolation function
 function interpolateColor(strategy, startColor, endColor, t) {
@@ -1068,3 +1075,44 @@ function findObjectName(lines) {
 yamlInput.addEventListener("input", updateYamlDefaultsDisplay);
 yamlInput.addEventListener("click", updateYamlDefaultsDisplay);
 yamlInput.addEventListener("keyup", updateYamlDefaultsDisplay);
+
+const encoding = "gzip"
+function compress(string) {
+  const byteArray = new TextEncoder().encode(string);
+  const cs = new CompressionStream(encoding);
+  const writer = cs.writable.getWriter();
+  writer.write(byteArray);
+  writer.close();
+  let response = new Response(cs.readable);
+  let buf = response.arrayBuffer()
+  return buf
+}
+
+function _arrayBufferToBase64( buffer ) {
+    var binary = '';
+    var bytes = new Uint8Array( buffer );
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode( bytes[ i ] );
+    }
+    return window.btoa( binary );
+}
+
+function _base64ToArrayBuffer(base64) {
+    var binaryString = atob(base64);
+    var bytes = new Uint8Array(binaryString.length);
+    for (var i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+function decompress(byteArray) {
+  const cs = new DecompressionStream(encoding);
+  const writer = cs.writable.getWriter();
+  writer.write(byteArray);
+  writer.close();
+  return new Response(cs.readable).arrayBuffer().then(function (arrayBuffer) {
+    return new TextDecoder().decode(arrayBuffer);
+  });
+}
