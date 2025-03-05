@@ -260,9 +260,9 @@ const EXPECTED_PROPERTIES = {
                 color: { default: "black", transform: c => normalizeColor(c) }
             },
             color: { default: "black", transform: c => normalizeColor(c) },
-            size: { default: 50, allowed: (i) => ['star', 'cat', 'dog'].indexOf(i.icon?.shape) != -1}, // Optional, depending on the shape type
-            width: { default: 50, allowed: (i) => ['rectangle', 'cloud', 'database', 'line', 'line-arrow', 'arrow'].indexOf(i.icon?.shape) != -1 },
-            height: { default: 50, allowed: (i) => ['rectangle', 'cloud', 'database', 'line', 'line-arrow', 'arrow'].indexOf(i.icon?.shape) != -1 }
+            size: { default: 50, allowed: (i) => ['star', 'cloud', 'cat', 'dog'].indexOf(i.icon?.shape) != -1}, // Optional, depending on the shape type
+            width: { default: 50, allowed: (i) => ['rectangle', 'database', 'line', 'line-arrow', 'arrow'].indexOf(i.icon?.shape) != -1 },
+            height: { default: 50, allowed: (i) => ['rectangle', 'database', 'line', 'line-arrow', 'arrow'].indexOf(i.icon?.shape) != -1 }
         },
         position: {
             x: { default: 0 },
@@ -421,20 +421,22 @@ function setDefaults(obj, expectedStructure, path = "", diagramObj) {
 }
 
 // Load YAML button
-document.getElementById("loadYAMLButton").addEventListener("click", function () {
-    try {
-        let yml = yamlText()
-        parseYamlAndRender(yml);
-        compress(yml).then((v) => {
-          let base64 = _arrayBufferToBase64(v)
-          window.location.hash = '#' + base64
-          console.log("Base64", base64)
-        })
-    } catch (error) {
-        console.error("Error parsing YAML: " + error.message)
-        throw error
-    }
-});
+document.getElementById("loadYAMLButton").addEventListener("click", parseAndLoad);
+
+function parseAndLoad() {
+  try {
+      let yml = yamlText()
+      parseYamlAndRender(yml);
+      compress(yml).then((v) => {
+        let base64 = _arrayBufferToBase64(v)
+        window.location.hash = '#' + base64
+        console.log("Base64", base64)
+      })
+  } catch (error) {
+      console.error("Error parsing YAML: " + error.message)
+      throw error
+  }
+}
 
 // Animate button
 document.getElementById("animateButton").addEventListener("click", function () {
@@ -458,7 +460,7 @@ document.getElementById("generateGIFButton").addEventListener("click", function 
 const allowedShapeProperties = {
     rectangle: ["width", "height"],
     star: ["size"],
-    cloud: ["width", "height"],
+    cloud: ["size"],
     database: ["width", "height"],
     line: ["length", "rotation", "width"],
     "line-arrow": ["length", "rotation", "width"],
@@ -577,13 +579,15 @@ function drawDiagram(objectsAndTransitions) {
         const { shape } = icon;
         switch (shape) {
             case "rectangle":
-                ctx.rect(element.position.x, element.position.y, icon.width, icon.height);
+                let halfWidth = icon.width / 2
+                let halfHeight = icon.height / 2
+                ctx.rect(element.position.x - halfWidth, element.position.y - halfHeight, icon.width, icon.height);
                 break;
             case "star":
                 drawStar(ctx, element.position.x, element.position.y, icon.size);
                 break;
             case "cloud":
-                drawCloud(ctx, element.position.x, element.position.y, icon.width, icon.height);
+                drawCloud(ctx, element.position.x, element.position.y, icon.size);
                 break;
             case "database":
                 drawDatabase(ctx, element.position.x, element.position.y, icon.width, icon.height);
@@ -942,45 +946,51 @@ function drawStar(ctx, x, y, size) {
     ctx.lineTo(cx, cy - outerRadius);
 }
 
-function drawCloud(ctx, x, y, width, height) {
-    ctx.arc(x, y, width / 4, Math.PI * 0.5, Math.PI * 1.5);
-    ctx.arc(x + width / 4, y - height / 2, width / 4, Math.PI, 0);
-    ctx.arc(x + width / 2, y - height / 2, width / 4, Math.PI, 0);
-    ctx.arc(x + width, y, width / 4, Math.PI * 1.5, Math.PI * 0.5);
+function drawCloud(ctx, x, y, size) {
+    ctx.arc(x - (3/8 * size), y, size / 4, Math.PI * 0.45, Math.PI * 1.7);  // Left cloud
+    ctx.arc(x - (1/24 * size), y - (1/9 * size), size * 0.29, Math.PI * 1.18, Math.PI * 1.88);  // Top cloud
+    ctx.arc(x + (3/8 * size), y, size / 4, Math.PI * 1.25, Math.PI * 2.45); // Right cloud
+    ctx.arc(x + (5 / 24 * size), y + (2/9 * size), size * 0.21, 0, Math.PI * 0.78); // Bottom right cloud
+    ctx.arc(x - (3 / 24 * size), y + (2/9 * size), size * 0.21, Math.PI * 0.1, Math.PI * 0.95);  // Bottom left cloud
+
     ctx.closePath();
 }
 
 function drawDatabase(ctx, x, y, width, height) {
 
-    ctx.rect(x - width/2, y, width, height)
+    let halfHeight = height / 2
+    let halfWidth = width / 2
+//    ctx.rect(x - width/2, y, width, height)
+    ctx.rect(x - halfWidth, y - halfHeight, width, height)
     ctx.fill();
 
     // Draw the top full ellipse (showing both front and back)
     ctx.beginPath();
-    ctx.ellipse(x, y, width / 2, height / 4, 0, 0, Math.PI * 2);
+//    ctx.ellipse(x, y, width / 2, height / 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y - halfHeight, halfWidth, height / 4, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
     // Draw middle ellipses (only front halves)
     for (let i = 1; i < 4; i++) {
         ctx.beginPath();
-        ctx.ellipse(x, y + (i * height) / 4, width / 2, height / 4, 0, 0, Math.PI);
+        ctx.ellipse(x, y - halfHeight + (i * height) / 4, width / 2, height / 4, 0, 0, Math.PI);
         ctx.fill();
         ctx.stroke();
     }
 
     // Draw the bottom half-ellipse for the base outline
     ctx.beginPath();
-    ctx.ellipse(x, y + height, width / 2, height / 4, 0, 0, Math.PI);
+    ctx.ellipse(x, y + halfHeight, width / 2, height / 4, 0, 0, Math.PI);
     ctx.fill();
     ctx.stroke();
 
     // Draw the vertical lines on the sides
     ctx.beginPath();
-    ctx.moveTo(x - width / 2, y); // Left vertical line
-    ctx.lineTo(x - width / 2, y + height);
-    ctx.moveTo(x + width / 2, y); // Right vertical line
-    ctx.lineTo(x + width / 2, y + height);
+    ctx.moveTo(x - width / 2, y - halfHeight); // Left vertical line
+    ctx.lineTo(x - width / 2, y + halfHeight);
+    ctx.moveTo(x + width / 2, y - halfHeight); // Right vertical line
+    ctx.lineTo(x + width / 2, y + halfHeight);
     ctx.stroke();
 }
 

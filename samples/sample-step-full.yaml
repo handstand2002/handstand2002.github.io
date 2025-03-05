@@ -48,7 +48,7 @@ template:
         width: 60
       label:
         offsetX: -10
-        offsetY: 5
+        offsetY: -25
 
   transition:
     - name: msg_to_p0
@@ -61,24 +61,15 @@ template:
         anchor.end: p1
 
 anchors:
+  - name: producer
+    x: 185
+    y: 20
   - name: p0
-    x: 140
-    y: 315
-  - name: p0_box
     x: 150
     y: 300
   - name: p1
-    x: 240
-    y: 315
-  - name: p1_box
     x: 250
     y: 300
-  - name: producer_box
-    x: 150
-    y: 10
-  - name: producer
-    x: 185
-    y: 15
 
 objects:
   - name: producer
@@ -89,10 +80,10 @@ objects:
       color: "#BBBBFF"
     label:
       value: Producer
-      offsetX: 10
-      offsetY: 20
+      offsetX: -35
+      offsetY: 5
     position:
-      anchor: producer_box
+      anchor: producer
   - name: p0
     templates:
       - db
@@ -100,7 +91,7 @@ objects:
     label:
       value: P0
     position:
-      anchor: p0_box
+      anchor: p0
   - name: p1
     templates:
       - db
@@ -108,7 +99,7 @@ objects:
     label:
       value: P1
     position:
-      anchor: p1_box
+      anchor: p1
   - name: d0
     templates:
       - msg

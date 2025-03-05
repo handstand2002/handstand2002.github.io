@@ -116,6 +116,7 @@
         promisedTxt.then((v) => {
             input = document.getElementById("yamlInput")
             input.value = v
+            parseAndLoad()
           })
       } else {
         fetch(url, options)
