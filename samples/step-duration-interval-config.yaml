@@ -87,6 +87,8 @@ steps:
           y.start: 45
           x.end: 250
           y.end: 300
+    # interval between this step and next is 200ms
+    nextInterval: 200
   - transitions:
       - name: d2
         position:
@@ -94,6 +96,8 @@ steps:
           y.start: 45
           x.end: 150
           y.end: 300
+    # the duration of this transition is shortened by half (objects move faster)
+    durationMultiplier: 0.5
   - transitions:
       - name: d1
         position:

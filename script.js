@@ -34,7 +34,7 @@ function preProcessElements(elements, anchors, templates) {
         for (idx in el.templates) {
           let useTemplateName = el.templates[idx]
           if (typeof useTemplateName != "string") {
-            console.error("Expected a template name but instead found " + (typeof useTemplateName), useTemplateName)
+            console.error("Expected a template name but instead found " + (typeof useTemplateName), useTemplateName, " when processing element ", el)
             throw new Error("Expected a template name but instead found " + (typeof useTemplateName))
           }
           let template = findTemplate(templates, useTemplateName)
@@ -223,7 +223,12 @@ function parseStep(doc) {
 
   steps.forEach(st => {
     let stepTransitions = st.transitions || []
-    transitionEnd = nextTransitionStart + calculateTransitionEnd(config.duration, stepTransitions.length)
+    let stepDuration = config.duration;
+    if (typeof st.durationMultiplier == 'number') {
+      stepDuration = structuredClone(config.duration)
+      stepDuration['default'] *= st.durationMultiplier;
+    }
+    transitionEnd = nextTransitionStart + calculateTransitionEnd(stepDuration, stepTransitions.length)
 
     stepTransitions.forEach(tr => {
       if (typeof tr.timeStart !== 'undefined') {
@@ -238,7 +243,11 @@ function parseStep(doc) {
       transitions.push(tr)
     })
     let durationFromCoefficient = config.interval.default * Math.pow(config.interval.objCountCoefficient, stepTransitions.length-1)
-    nextTransitionStart = transitionEnd + Math.min(durationFromCoefficient, config.interval.max)
+    let intervalAfterStep = Math.min(durationFromCoefficient, config.interval.max)
+    if (typeof st.nextInterval == 'number') {
+      intervalAfterStep = st.nextInterval
+    }
+    nextTransitionStart = transitionEnd + intervalAfterStep
   })
 
   return {elements: elements, transitions: transitions}
