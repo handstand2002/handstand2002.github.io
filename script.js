@@ -440,11 +440,25 @@ function parseAndLoad() {
         let base64 = _arrayBufferToBase64(v)
         window.location.hash = '#' + base64
         console.log("Base64", base64)
+        updateViewerUrl();
       })
   } catch (error) {
       console.error("Error parsing YAML: " + error.message)
       throw error
   }
+}
+
+const viewerUrlInput = document.getElementById("viewerUrl")
+console.log("input", typeof viewerUrlInput)
+if (typeof viewerUrlInput != 'undefined' && viewerUrlInput != null) {
+  viewerUrlInput.addEventListener("click", function () {
+    viewerUrlInput.focus();
+    viewerUrlInput.select();
+  })
+}
+
+function updateViewerUrl() {
+  viewerUrlInput.value = window.location.host + "/viewer.html" + window.location.hash
 }
 
 // Animate button
@@ -640,7 +654,7 @@ function effectiveRateHigherThanDesired(startTime) {
 }
 
 // Function to animate properties during transitions
-function animateDiagram(objectsAndTransitions) {
+function animateDiagram(objectsAndTransitions, runForever = false) {
 
     const {elements, transitions} = objectsAndTransitions;
     if (animationId) {
@@ -651,7 +665,13 @@ function animateDiagram(objectsAndTransitions) {
       lastTransitionEnd = Math.max(lastTransitionEnd, tr.timeEnd)
     })
     const animationDuration = lastTransitionEnd + 2000
+
+    drawDiagram(objectsAndTransitions)
     console.log("Animation will be " + animationDuration + "ms")
+    if (runForever) {
+      let clonedObjects = structuredClone(objectsAndTransitions)
+      setTimeout(animateDiagram, animationDuration, clonedObjects, true)
+    }
 
     startTime = Date.now();
     frames.length = 0; // Clear previous frames
@@ -705,7 +725,6 @@ function animateDiagram(objectsAndTransitions) {
                             }
                         }
 
-
                         console.log("Transition Start", structuredClone(transition), " on object", structuredClone(element))
                     }
                     const strategy = transition.strategy
@@ -742,7 +761,6 @@ function animateDiagram(objectsAndTransitions) {
 
     animate();
 }
-// TODO: create a 'animateInfinite' method that repeats the animation infinitely
 
 // Color interpolation function
 function interpolateColor(strategy, startColor, endColor, t) {
