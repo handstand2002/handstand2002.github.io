@@ -1,0 +1,34 @@
+# Approach A: PLAIN mode with timeStart == timeEnd (zero duration)
+# The object should teleport from left to right at t=1000ms.
+# This causes transitionDuration=0, so progress = N/0 (div-by-zero).
+
+canvas:
+  height: 200
+  width: 400
+
+mode: PLAIN
+
+objects:
+  - name: box
+    icon:
+      shape: rectangle
+      height: 40
+      width: 40
+      color: "#4488FF"
+    label:
+      value: box
+      offsetX: -10
+      offsetY: 5
+      font: '14px Arial'
+      color: white
+    position:
+      x: 60
+      y: 100
+
+transitions:
+  - name: box
+    timeStart: 1000
+    timeEnd: 1000
+    position:
+      x.end: 340
+      y.end: 100

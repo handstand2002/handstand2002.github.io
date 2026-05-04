@@ -1,0 +1,54 @@
+# Approach C: STEP mode with durationMultiplier: 0
+# The object should teleport from left to right instantaneously.
+# durationMultiplier: 0 makes stepDuration.default = 0, producing timeStart == timeEnd (same div-by-zero as Approach A).
+
+canvas:
+  height: 200
+  width: 400
+
+mode: STEP
+
+config:
+  duration:
+    default: 1000
+    max: 2000
+    objCountCoefficient: 1.2
+  interval:
+    default: 500
+    max: 1000
+    objCountCoefficient: 1.2
+
+objects:
+  - name: box
+    icon:
+      shape: rectangle
+      height: 40
+      width: 40
+      color: "#CC4444"
+    label:
+      value: box
+      offsetX: -10
+      offsetY: 5
+      font: '14px Arial'
+      color: white
+    position:
+      x: 60
+      y: 100
+
+steps:
+  - transitions:
+      - name: box
+        position:
+          x.end: 200
+          y.end: 100
+  - durationMultiplier: 0
+    transitions:
+      - name: box
+        position:
+          x.end: 340
+          y.end: 100
+  - transitions:
+      - name: box
+        position:
+          x.end: 200
+          y.end: 100

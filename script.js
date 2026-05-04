@@ -170,6 +170,8 @@ function findTemplate(templates, nameToFind) {
   }
 }
 
+// TODO: support grouping objects together (at end of transition?) so transitions applied to the group apply to each member
+
 function parsePlain(doc) {
   let elements = doc.objects || [];
   let anchors = doc.anchors || [];
@@ -700,10 +702,10 @@ function animateDiagram(objectsAndTransitions, runForever = false) {
                 const timeEnd = transition.timeEnd
                 const transitionIcon = transition.icon
 
-                if (elapsedTime >= timeStart && elapsedTime <= timeEnd) {
+                if (!transition.completed && elapsedTime >= timeStart) {
 
                     const transitionDuration = transition.timeEnd - transition.timeStart
-                    const progress = Math.min(1, (elapsedTime - transition.timeStart) / transitionDuration);
+                    const progress = transitionDuration === 0 ? 1 : Math.min(1, (elapsedTime - transition.timeStart) / transitionDuration);
 
                     if (typeof transition.initialValues === 'undefined') {
                         transition.initialValues = {
@@ -740,6 +742,10 @@ function animateDiagram(objectsAndTransitions, runForever = false) {
 
                     element.icon.color = interpolateColor(strategy, transition.initialValues.icon.color, transitionIcon?.['color.end'], progress);
                     element.icon.outline.color = interpolateColor(strategy, transition.initialValues.icon.outline.color, transitionIcon?.outline?.['color.end'], progress);
+
+                    if (elapsedTime >= timeEnd) {
+                        transition.completed = true;
+                    }
                 }
             });
         });

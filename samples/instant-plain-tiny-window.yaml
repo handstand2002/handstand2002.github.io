@@ -1,0 +1,34 @@
+# Approach B: PLAIN mode with a 1ms window (timeEnd = timeStart + 1)
+# The object should teleport from left to right at t=1000ms.
+# The 1ms window is so narrow it will likely be skipped between animation frames (~16ms apart).
+
+canvas:
+  height: 200
+  width: 400
+
+mode: PLAIN
+
+objects:
+  - name: box
+    icon:
+      shape: rectangle
+      height: 40
+      width: 40
+      color: "#44AA44"
+    label:
+      value: box
+      offsetX: -10
+      offsetY: 5
+      font: '14px Arial'
+      color: white
+    position:
+      x: 60
+      y: 100
+
+transitions:
+  - name: box
+    timeStart: 1000
+    timeEnd: 1001
+    position:
+      x.end: 340
+      y.end: 100
