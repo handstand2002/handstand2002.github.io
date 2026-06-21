@@ -27,8 +27,6 @@ objects:
       color: "#CC4444"
     label:
       value: box
-      offsetX: -10
-      offsetY: 5
       font: '14px Arial'
       color: white
     position:

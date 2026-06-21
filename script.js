@@ -282,8 +282,8 @@ const EXPECTED_PROPERTIES = {
             anchor: { required: false } /* may be used instead of x,y */
         },
         label: {
-            offsetX: { default: 10 },
-            offsetY: { default: 10 },
+            offsetX: { default: 0 },
+            offsetY: { default: 0 },
             font: { default: '14px Arial' },
             style: { default: 'normal' },
             color: { default: 'black', transform: c => normalizeColor(c) },
@@ -417,7 +417,7 @@ function setDefaults(obj, expectedStructure, path = "", diagramObj) {
         diagramObj = obj
     }
     for (let key in expectedStructure) {
-        if (typeof obj[key] === 'undefined' && expectedStructure[key].default && propertyAllowed(diagramObj, expectedStructure[key])) {
+        if (typeof obj[key] === 'undefined' && typeof expectedStructure[key].default !== 'undefined' && propertyAllowed(diagramObj, expectedStructure[key])) {
             obj[key] = expectedStructure[key].default
         } else if (typeof expectedStructure[key] === "object" && !Array.isArray(obj[key])
                 && typeof expectedStructure[key].default === 'undefined'
@@ -635,10 +635,12 @@ function drawDiagram(objectsAndTransitions) {
         if (outline && outlineThickness > 0) ctx.stroke();
         ctx.closePath();
 
-        // Draw label
+        // Draw label centered on the object; offsetX/offsetY nudge from center
         if (element.label && element.label.value) {
             ctx.fillStyle = element.label.color;
             ctx.font = element.label.font;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
             ctx.fillText(
                 element.label.value,
                 element.position.x + element.label.offsetX,

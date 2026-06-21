@@ -46,9 +46,6 @@ template:
         shape: database
         height: 60
         width: 60
-      label:
-        offsetX: -10
-        offsetY: -25
 
   transition:
     - name: msg_to_p0
@@ -80,8 +77,6 @@ objects:
       color: "#BBBBFF"
     label:
       value: Producer
-      offsetX: -35
-      offsetY: 5
     position:
       anchor: producer
   - name: p0

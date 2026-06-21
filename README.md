@@ -107,8 +107,8 @@ PositionConfig = [ "x:", Number ],
                  [ "z:", Number ],
                  [ "anchor:", String ] ;
 
-LabelConfig = [ "offsetX:", Number ],
-              [ "offsetY:", Number ],
+LabelConfig = [ "offsetX:", Number ],   (* nudge from center; default 0 *)
+              [ "offsetY:", Number ],   (* nudge from center; default 0 *)
               [ "font:", String ],
               [ "style:", String ],
               [ "color:", ColorString ],

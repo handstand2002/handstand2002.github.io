@@ -42,8 +42,6 @@ objects:
       color: "#BBBBFF"
     label:
       value: Producer
-      offsetX: 10
-      offsetY: 20
     position:
       x: 150
       y: 10
@@ -54,8 +52,6 @@ objects:
       - db
     label:
       value: P0
-      offsetX: -10
-      offsetY: 5
     position:
       x: 150
       y: 300
@@ -65,8 +61,6 @@ objects:
       - db
     label:
       value: P1
-      offsetX: -10
-      offsetY: 5
     position:
       x: 250
       y: 300

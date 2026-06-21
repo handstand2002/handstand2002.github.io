@@ -13,8 +13,6 @@ objects:
       color: "#BBBBFF"
     label:
       value: Producer
-      offsetX: 10
-      offsetY: 20
       font: '17px Arial'
       style: bold
       color: black
@@ -29,8 +27,6 @@ objects:
       color: "#99CC99"
     label:
       value: P0
-      offsetX: -10
-      offsetY: 5
       font: '17px Arial'
       style: bold
       color: black
@@ -45,8 +41,6 @@ objects:
       color: "#BBBBFF"
     label:
       value: P1
-      offsetX: -10
-      offsetY: 5
       font: '17px Arial'
       style: bold
       color: black
