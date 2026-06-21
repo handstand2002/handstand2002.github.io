@@ -118,6 +118,8 @@ LabelConfig = [ "offsetX:", Number ],   (* nudge from center; default 0 *)
 ### Transitions & Steps
 Transitions differ based on whether the document mode is `PLAIN` or `STEP`. In `PLAIN` mode, `timeStart` and `timeEnd` are required. In `STEP` mode they are inferred and must NOT be present. 
 
+> **Note:** `TransitionLabelConfig` is accepted by the parser but **not applied by the animation loop**. `animateDiagram` in `script.js` only interpolates `position`, `icon.color`, `icon.size/width/height`, and `icon.outline.thickness/color` — an object's `label` (its `value`, `color`, and offsets) is fixed for the whole animation. To make text appear to change, give each value its own object with fixed text and reveal them in sequence (e.g. slide them in via a `position` transition) rather than animating `label.value`.
+
 ```ebnf
 Transition = "- name:", String,
              TransitionProperties ;

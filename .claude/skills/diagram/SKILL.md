@@ -2,7 +2,7 @@
 name: diagram
 description: Generate animated diagram YAML for this project from a plain-English description, then convert it to a shareable viewer/editor URL. Use when the user wants to create, animate, or share an animated diagram (e.g. "a message queue with two consumers").
 argument-hint: "Description of the diagram to animate, or a path to an existing .yaml file"
-allowed-tools: ["Bash(.claude/skills/diagram/yaml-to-url.sh:*)"]
+allowed-tools: ["Bash(.claude/skills/diagram/yaml-to-url.sh:*)", "Bash(open:*)"]
 ---
 
 You create animated diagram YAML for this project and turn it into a shareable URL.
@@ -24,6 +24,8 @@ To produce the URL, write the YAML to a temp file and run:
 ```
 
 Print the resulting URL on its own line so it is easy to copy.
+
+Then **open the URL in the user's default browser** by running `open "<url>"` (macOS), unless the user asked you not to open it (e.g. "don't open", "just give me the link", "no browser"). If you skip opening for this reason, note that you did so.
 
 ---
 
@@ -117,10 +119,6 @@ position:
   y.start: <number>   y.end: <number>
   z.start: <number>   z.end: <number>
   anchor.start: <string>   anchor.end: <string>
-label:
-  offsetX.start: <number>   offsetX.end: <number>
-  offsetY.start: <number>   offsetY.end: <number>
-  color.start: <color>      color.end: <color>
 icon:
   color.start: <color>      color.end: <color>
   size.start: <number>      size.end: <number>
@@ -130,6 +128,18 @@ icon:
     thickness.start: <number>   thickness.end: <number>
     color.start: <color>        color.end: <color>
 ```
+
+> ⚠️ **Label properties are NOT animatable.** The animation loop
+> (`script.js` `animateDiagram`) only interpolates `position`, `icon.size/width/height`,
+> `icon.color`, and `icon.outline.thickness/color`. It never touches `label` — so
+> `label.value`, `label.color.*`, and `label.offset*.*` in a transition are **silently
+> ignored**. An object's text and label color are fixed for the whole animation at
+> whatever the object definition sets.
+>
+> **Implication:** you cannot morph text (e.g. animate `"cat"` → `4937` → a vector) by
+> swapping `label.value` across steps — the box keeps its original text and only its
+> shape/position/color will move. To show a value *changing*, give each value its own
+> object with fixed text and reveal them in sequence (see design tip 7).
 
 ### Colors
 
@@ -151,6 +161,15 @@ icon:
 4. In STEP mode, each step should transition one logical "event." Concurrent events in the same step animate in parallel.
 5. For smooth movement use `strategy: cosine`; for mechanical/digital use `strategy: linear`.
 6. Keep canvas ≤ 600×600 for the default viewer window.
+7. **Text is fixed per object** (see the label warning above). To depict a value transforming
+   through stages, model each stage's value as a separate object with its own fixed text, then
+   reveal them one per step — e.g. start them off-canvas (`x: -320`) and slide them into place
+   with a `position: { x.end: ... }` transition. The label rides along with the position. This
+   is how the "build up a pipeline" style diagrams work.
+8. Keep the generated hash under ~1700 chars (compact YAML: trim comments and long unique
+   strings). macOS `open` truncates URLs near ~2048 chars, which corrupts the gzip and yields
+   "invalid distance too far back" in the viewer. For larger diagrams, hand the user the URL as
+   copy-paste text instead of relying on `open`.
 
 ---
 
