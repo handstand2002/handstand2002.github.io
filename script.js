@@ -287,7 +287,8 @@ const EXPECTED_PROPERTIES = {
             font: { default: '14px Arial' },
             style: { default: 'normal' },
             color: { default: 'black', transform: c => normalizeColor(c) },
-            value: { default: '' }
+            value: { default: '' },
+            align: { default: 'center' } // canvas textAlign: left | right | center | start | end
         }
     },
     transition: {
@@ -639,7 +640,7 @@ function drawDiagram(objectsAndTransitions) {
         if (element.label && element.label.value) {
             ctx.fillStyle = element.label.color;
             ctx.font = element.label.font;
-            ctx.textAlign = 'center';
+            ctx.textAlign = element.label.align || 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(
                 element.label.value,

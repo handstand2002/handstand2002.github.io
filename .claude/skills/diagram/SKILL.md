@@ -7,6 +7,25 @@ allowed-tools: ["Bash(.claude/skills/diagram/yaml-to-url.sh:*)", "Bash(open:*)"]
 
 You create animated diagram YAML for this project and turn it into a shareable URL.
 
+## Purpose: diagrams should teach
+
+The goal of every diagram is to be **instructive**. The user is trying to understand
+or explain *how something works*, so prioritize the details that matter to them:
+
+- Show the real moving parts and the data/messages that flow between them, with labels
+  that name what each thing actually is (don't leave boxes generic — name the queue, the
+  request, the ack, etc.).
+- Favor concrete, specific labels over abstract ones. If the user mentions a protocol,
+  payload, or field, surface it in the animation.
+- The animation itself carries the explanation — use motion to show *order* and
+  *causality*, not just decoration.
+
+**Avoid sequence diagrams.** Classic UML-style sequence diagrams (lifelines + arrows down
+the page) are less intuitive here precisely because they're static; we have animation that
+makes the timing obvious without the reader decoding a grid. When you'd reach for a
+sequence diagram, build the [communication pattern](#communication-between-objects) below
+instead.
+
 ## User's request
 
 $ARGUMENTS
@@ -108,6 +127,7 @@ label:
   font: <css-font>    # e.g. '17px Arial'
   style: bold | italic | ...
   color: <color>
+  align: center | left | right | start | end   # horizontal alignment; default center
 ```
 
 ### Transition properties
@@ -170,6 +190,106 @@ icon:
    strings). macOS `open` truncates URLs near ~2048 chars, which corrupts the gzip and yields
    "invalid distance too far back" in the viewer. For larger diagrams, hand the user the URL as
    copy-paste text instead of relying on `open`.
+
+---
+
+## Communication between objects
+
+When the user wants to illustrate two (or more) things talking to each other — a client
+and server, a producer and consumer, two services exchanging messages — **do not** use a
+sequence diagram. Build a simple spatial diagram instead:
+
+1. Draw the **participants** as a small number of clearly-labeled objects (e.g. two boxes
+   or a box + a database), placed at fixed anchors and held still for the whole animation.
+2. Model each **message** as its own object (label it with what the message *is* — e.g.
+   `"SYN"`, `"request"`, `"ack"`, `"row data"`). Give messages `z: 999` so they ride on
+   top of the participants.
+3. In STEP mode, each step moves one message from its sender's anchor to its receiver's
+   anchor (`position.anchor.end`). Messages travel back and forth between the participants,
+   one logical exchange per step. Use `strategy: cosine` for a natural send/receive feel.
+
+This reads as "objects exchanging messages over time," which the animation makes
+self-explanatory.
+
+### Step checklist
+
+For these communication diagrams (and any multi-step explanation), **include a step
+checklist** so the viewer can follow exactly which step is happening at any moment, can see
+which steps are already done, and can tell when the loop restarts.
+
+**Default placement: bottom-left** of the canvas, as a vertical list (one text object per
+step). Reserve a narrow left "gutter" column for the running/done indicators and center the
+step text just to the right of it. Move it elsewhere only if the user asks (e.g. "put the
+checklist on the right"). For a tidy left edge on a column of differing-length lines, set
+`label.align: left` on the step text and anchor each line at the same x — otherwise labels
+default to center-aligned and the column will be ragged.
+
+The checklist has three moving pieces:
+
+1. **Running indicator** — a single marker icon (a `star` works well; amber/`#fbbf24`) that
+   sits in the gutter next to the step currently animating. In **each** step, add a
+   transition moving the marker's `position.anchor.end` to that step's gutter slot, so it
+   walks down the list in lockstep with the messages. In a final cleanup step, move the
+   marker off-canvas (to a `park` anchor) so the finished list shows no "running" step.
+2. **Done checkmark** — a green `✓` *label* object per step (there is no checkmark icon
+   shape, and label text/color can't animate — see the label warning — so the check is a
+   green text glyph on an invisible `line` carrier). It starts just off the left edge and
+   slides into the gutter when its step **completes**.
+3. **Completed-text recolor** (optional, the "turn the line green" effect) — a green
+   duplicate of each step's text, parked off-canvas left, that slides in over the original
+   gray line (`z` above it) when the step completes. Same value/font/anchor as the gray
+   line so it covers it exactly. Skip this if you want to keep the hash small; the green ✓
+   alone already signals "done."
+
+**Timing — "complete" means the message arrived.** Reveal step *N*'s checkmark and green
+text in step *N+1* (not during step *N*), so a line only goes green once its exchange has
+actually landed. The last step therefore needs a trailing cleanup step that reveals the
+final checkmark/green text and parks the running marker.
+
+Because the engine re-clones the original objects every loop (`animateDiagram` in
+`script.js`), all of this **resets automatically when the animation restarts** — the marker
+jumps back to step 1 and every checkmark/green line flies back off-canvas. That reset is the
+visual cue that the loop has started over; no extra step is needed to undo it.
+
+Sketch of the mechanic (STEP mode, gutter `g*` = indicator slots, `t*` = text centers):
+
+```yaml
+template:
+  object:
+    - name: step                                   # pending line (gray)
+      icon: { shape: line, width: 0, height: 0 }
+      label: { font: '14px Arial', color: '#94a3b8' }
+    - name: done                                   # completed marker/text (green)
+      icon: { shape: line, width: 0, height: 0 }
+      label: { font: 'bold 14px Arial', color: '#22c55e' }
+anchors:
+  - { name: t1, x: 180, y: 222 }   # ...t2, t3: text centers, bottom-left
+  - { name: g1, x: 35,  y: 222 }   # ...g2, g3: gutter slots
+  - { name: park, x: 700, y: 180 } # off-canvas parking for the running marker
+objects:
+  - { name: line1, templates: [step], position: { anchor: t1, z: 1 }, label: { value: '1. Client -> Server: SYN' } }
+  # ...line2, line3
+  - { name: green1, templates: [done], position: { x: -360, y: 222, z: 5 }, label: { value: '1. Client -> Server: SYN' } }
+  # ...green2, green3 (parked off-canvas left, slide to t*)
+  - { name: check1, templates: [done], position: { x: -60, y: 222, z: 6 }, label: { value: '✓', font: 'bold 18px Arial' } }
+  # ...check2, check3 (parked off-canvas left, slide to g*)
+  - { name: marker, icon: { shape: star, size: 15, color: '#fbbf24' }, position: { anchor: g1, z: 1000 } }
+steps:
+  - transitions:                                   # step 1 runs (SYN flies), marker on line 1
+      - { name: marker, position: { anchor.end: g1 }, strategy: cosine }
+      # ...syn message transition
+  - transitions:                                   # step 2 runs; step 1 is now DONE
+      - { name: marker, position: { anchor.end: g2 }, strategy: cosine }
+      - { name: check1, position: { anchor.end: g1 }, strategy: cosine }
+      - { name: green1, position: { anchor.end: t1 }, strategy: cosine }
+      # ...synack message transition
+  # ...step 3 reveals check2/green2, then a final cleanup step reveals check3/green3
+  #    and moves marker -> park
+```
+
+(A trailing slide-in streak is visible as the green text flies in from off-canvas; that's
+the cost of recoloring text that can't animate in place. Drop the `green*` objects if you'd
+rather avoid it.)
 
 ---
 

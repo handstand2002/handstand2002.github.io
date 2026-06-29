@@ -112,8 +112,11 @@ LabelConfig = [ "offsetX:", Number ],   (* nudge from center; default 0 *)
               [ "font:", String ],
               [ "style:", String ],
               [ "color:", ColorString ],
-              [ "value:", String ] ;
+              [ "value:", String ],
+              [ "align:", ( "center" | "left" | "right" | "start" | "end" ) ] ;  (* horizontal text alignment; default center *)
 ```
+
+`align` controls horizontal text alignment relative to the label's anchor point (`position` + `offset`). It defaults to `center`; set it to `left` (or `right`) when you need a column of text to line up on its left edge — e.g. a step checklist.
 
 ### Transitions & Steps
 Transitions differ based on whether the document mode is `PLAIN` or `STEP`. In `PLAIN` mode, `timeStart` and `timeEnd` are required. In `STEP` mode they are inferred and must NOT be present. 
