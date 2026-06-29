@@ -212,6 +212,26 @@ sequence diagram. Build a simple spatial diagram instead:
 This reads as "objects exchanging messages over time," which the animation makes
 self-explanatory.
 
+### Showing aggregation / fan-in
+
+When a participant reduces many items to one — a DB aggregating rows, a reducer folding
+events, a collector merging shards — make the reduction *honest and located*:
+
+1. **Source data stays put.** Render the items as a **static layer** (lower `z`) that never
+   moves. These represent the data at rest; moving them would imply the rows themselves
+   travel, which they don't.
+2. **Collapse a moving copy on top.** Duplicate the items as a **moving layer** (higher `z`,
+   sitting exactly over the static one so it's hidden at first) and converge all copies to a
+   single `agg` anchor. As they leave, the static layer is revealed staying in place, and a
+   single collapsed item forms at `agg` — the visual "N → 1." **Collapse toward the
+   participant doing the work** (e.g. *upward into* the database icon), so the location of the
+   collapsed anchor shows *where* the processing happens.
+3. **The collapsed bundle is the payload.** Send that same collapsed stack onward to the next
+   participant rather than spawning a fresh generic "result" object — the aggregate itself
+   travels, which is more faithful. Reserve a separate message object for the *next* leg (e.g.
+   the response the receiver then produces), so each object's identity matches what it
+   represents.
+
 ### Step checklist
 
 For these communication diagrams (and any multi-step explanation), **include a step
