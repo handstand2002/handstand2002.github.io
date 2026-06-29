@@ -727,6 +727,10 @@ function animateDiagram(objectsAndTransitions, runForever = false) {
                                   thickness: transitionIcon?.outline?.['thickness.start'] ?? element.icon.outline.thickness,
                                   color: transitionIcon?.outline?.['color.start'] ?? element.icon.outline.color
                                 }
+                            },
+
+                            label: {
+                                color: transition.label?.['color.start'] ?? element.label?.color
                             }
                         }
 
@@ -745,6 +749,10 @@ function animateDiagram(objectsAndTransitions, runForever = false) {
 
                     element.icon.color = interpolateColor(strategy, transition.initialValues.icon.color, transitionIcon?.['color.end'], progress);
                     element.icon.outline.color = interpolateColor(strategy, transition.initialValues.icon.outline.color, transitionIcon?.outline?.['color.end'], progress);
+
+                    if (element.label && typeof transition.label?.['color.end'] !== 'undefined') {
+                        element.label.color = interpolateColor(strategy, transition.initialValues.label.color, transition.label['color.end'], progress);
+                    }
 
                     if (elapsedTime >= timeEnd) {
                         transition.completed = true;

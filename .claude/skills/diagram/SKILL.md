@@ -149,17 +149,18 @@ icon:
     color.start: <color>        color.end: <color>
 ```
 
-> ⚠️ **Label properties are NOT animatable.** The animation loop
-> (`script.js` `animateDiagram`) only interpolates `position`, `icon.size/width/height`,
-> `icon.color`, and `icon.outline.thickness/color`. It never touches `label` — so
-> `label.value`, `label.color.*`, and `label.offset*.*` in a transition are **silently
-> ignored**. An object's text and label color are fixed for the whole animation at
-> whatever the object definition sets.
+> ⚠️ **Label text and offset are NOT animatable; label color IS.** The animation loop
+> (`script.js` `animateDiagram`) interpolates `position`, `icon.size/width/height`,
+> `icon.color`, `icon.outline.thickness/color`, **and `label.color`**. It does **not** touch
+> `label.value` or `label.offset*` — those in a transition are **silently ignored**, so an
+> object's text and label offset are fixed for the whole animation.
 >
 > **Implication:** you cannot morph text (e.g. animate `"cat"` → `4937` → a vector) by
 > swapping `label.value` across steps — the box keeps its original text and only its
-> shape/position/color will move. To show a value *changing*, give each value its own
-> object with fixed text and reveal them in sequence (see design tip 7).
+> shape/position/color (including label *color*) will move. To show a value *changing*, give
+> each value its own object with fixed text and reveal them in sequence (see design tip 7). To
+> recolor text in place (e.g. turn a checklist line green when done), animate
+> `label: { color.end: <color> }` on that object.
 
 ### Colors
 
@@ -227,69 +228,72 @@ default to center-aligned and the column will be ragged.
 The checklist has three moving pieces:
 
 1. **Running indicator** — a single marker icon (a `star` works well; amber/`#fbbf24`) that
-   sits in the gutter next to the step currently animating. In **each** step, add a
-   transition moving the marker's `position.anchor.end` to that step's gutter slot, so it
-   walks down the list in lockstep with the messages. In a final cleanup step, move the
-   marker off-canvas (to a `park` anchor) so the finished list shows no "running" step.
-2. **Done checkmark** — a green `✓` *label* object per step (there is no checkmark icon
-   shape, and label text/color can't animate — see the label warning — so the check is a
-   green text glyph on an invisible `line` carrier). It starts just off the left edge and
-   slides into the gutter when its step **completes**.
-3. **Completed-text recolor** (optional, the "turn the line green" effect) — a green
-   duplicate of each step's text, parked off-canvas left, that slides in over the original
-   gray line (`z` above it) when the step completes. Same value/font/anchor as the gray
-   line so it covers it exactly. Skip this if you want to keep the hash small; the green ✓
-   alone already signals "done."
+   sits in the gutter next to the step currently animating. Keep it **firmly parked** on the
+   active item while that step's action plays — don't slide it concurrently with the message
+   (a drifting marker reads as "in between" rather than "on this step"). Instead **teleport**
+   it to the new item *at the start of the **next** step*, so it jumps the instant the previous
+   step completes and then holds still. To teleport with no interpolation, give the marker
+   transition the same `anchor.start` **and** `anchor.end` (both = the destination slot): the
+   transition's first frame is already at the target, so there's no slide. The marker therefore
+   has **no** transition in the first action step (it's already parked there); a final cleanup
+   step teleports it off-canvas to a `park` anchor so the finished list shows no "running" step.
 
-**Timing — "complete" means the message arrived.** Reveal step *N*'s checkmark and green
-text in step *N+1* (not during step *N*), so a line only goes green once its exchange has
-actually landed. The last step therefore needs a trailing cleanup step that reveals the
-final checkmark/green text and parks the running marker.
+   > 💡 **Instant snap trick:** setting `anchor.start` == `anchor.end` (or `x.start` == `x.end`,
+   > etc.) makes any object jump to a position with zero interpolation at the moment its
+   > transition begins. Handy for state changes that should be discrete, not animated.
+2. **Completed-text recolor** — the "turn the line green when done" effect. Because
+   `label.color` **is** animatable, just recolor the line *in place*: animate
+   `label: { color.end: '#22c55e' }` on the step's own text object when the step completes (a
+   `cosine` fade from gray to green reads nicely). Don't overlay a green duplicate that slides
+   in from off-canvas — the slide looks bad, and it's no longer necessary.
+3. **Done checkmark** — a green `✓` *label* object per step (there is no checkmark icon
+   shape, so the check is a green text glyph on an invisible `line` carrier). Its text can't
+   animate, so park it just off the left edge and **teleport** it into the gutter when its step
+   completes using the instant-snap trick (`anchor.start` == `anchor.end` == its gutter slot) —
+   again, no slide.
+
+**Timing — "complete" means the message arrived.** Recolor step *N*'s line and reveal its
+checkmark in step *N+1* (not during step *N*), so a line only goes green once its exchange has
+actually landed. The last step therefore needs a trailing cleanup step that recolors the
+final line, reveals its checkmark, and parks the running marker.
 
 Because the engine re-clones the original objects every loop (`animateDiagram` in
 `script.js`), all of this **resets automatically when the animation restarts** — the marker
-jumps back to step 1 and every checkmark/green line flies back off-canvas. That reset is the
-visual cue that the loop has started over; no extra step is needed to undo it.
+jumps back to step 1, every line returns to gray, and every checkmark snaps back off-canvas.
+That reset is the visual cue that the loop has started over; no extra step is needed to undo it.
 
-Sketch of the mechanic (STEP mode, gutter `g*` = indicator slots, `t*` = text centers):
+Sketch of the mechanic (STEP mode, gutter `g*` = indicator slots, `t*` = text left edges):
 
 ```yaml
 template:
   object:
-    - name: step                                   # pending line (gray)
+    - name: step                                   # pending line (gray, left-aligned column)
       icon: { shape: line, width: 0, height: 0 }
-      label: { font: '14px Arial', color: '#94a3b8' }
-    - name: done                                   # completed marker/text (green)
+      label: { font: '14px Arial', color: '#94a3b8', align: left }
+    - name: done                                   # checkmark glyph (green)
       icon: { shape: line, width: 0, height: 0 }
-      label: { font: 'bold 14px Arial', color: '#22c55e' }
+      label: { font: 'bold 18px Arial', color: '#22c55e', align: left }
 anchors:
-  - { name: t1, x: 180, y: 222 }   # ...t2, t3: text centers, bottom-left
-  - { name: g1, x: 35,  y: 222 }   # ...g2, g3: gutter slots
+  - { name: t1, x: 55, y: 222 }    # ...t2, t3: text left edges, bottom-left (shared x)
+  - { name: g1, x: 35, y: 222 }    # ...g2, g3: gutter slots
   - { name: park, x: 700, y: 180 } # off-canvas parking for the running marker
 objects:
   - { name: line1, templates: [step], position: { anchor: t1, z: 1 }, label: { value: '1. Client -> Server: SYN' } }
   # ...line2, line3
-  - { name: green1, templates: [done], position: { x: -360, y: 222, z: 5 }, label: { value: '1. Client -> Server: SYN' } }
-  # ...green2, green3 (parked off-canvas left, slide to t*)
-  - { name: check1, templates: [done], position: { x: -60, y: 222, z: 6 }, label: { value: '✓', font: 'bold 18px Arial' } }
-  # ...check2, check3 (parked off-canvas left, slide to g*)
+  - { name: check1, templates: [done], position: { x: -60, y: 222, z: 6 }, label: { value: '✓' } }
+  # ...check2, check3 (parked off-canvas left, teleport into g*)
   - { name: marker, icon: { shape: star, size: 15, color: '#fbbf24' }, position: { anchor: g1, z: 1000 } }
 steps:
-  - transitions:                                   # step 1 runs (SYN flies), marker on line 1
-      - { name: marker, position: { anchor.end: g1 }, strategy: cosine }
+  - transitions:                                   # step 1 runs (SYN flies); marker already parked on line 1, no marker transition
       # ...syn message transition
   - transitions:                                   # step 2 runs; step 1 is now DONE
-      - { name: marker, position: { anchor.end: g2 }, strategy: cosine }
-      - { name: check1, position: { anchor.end: g1 }, strategy: cosine }
-      - { name: green1, position: { anchor.end: t1 }, strategy: cosine }
+      - { name: marker, position: { anchor.start: g2, anchor.end: g2 } }   # teleport marker to line 2
+      - { name: line1, label: { color.end: '#22c55e' }, strategy: cosine } # fade line 1 to green in place
+      - { name: check1, position: { anchor.start: g1, anchor.end: g1 } }   # teleport check into gutter
       # ...synack message transition
-  # ...step 3 reveals check2/green2, then a final cleanup step reveals check3/green3
-  #    and moves marker -> park
+  # ...step 3 recolors line2 + reveals check2, then a final cleanup step recolors line3,
+  #    reveals check3, and teleports marker to park
 ```
-
-(A trailing slide-in streak is visible as the green text flies in from off-canvas; that's
-the cost of recoloring text that can't animate in place. Drop the `green*` objects if you'd
-rather avoid it.)
 
 ---
 
