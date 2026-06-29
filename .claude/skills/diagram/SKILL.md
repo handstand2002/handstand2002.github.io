@@ -242,10 +242,13 @@ The checklist has three moving pieces:
    > etc.) makes any object jump to a position with zero interpolation at the moment its
    > transition begins. Handy for state changes that should be discrete, not animated.
 2. **Completed-text recolor** — the "turn the line green when done" effect. Because
-   `label.color` **is** animatable, just recolor the line *in place*: animate
-   `label: { color.end: '#22c55e' }` on the step's own text object when the step completes (a
-   `cosine` fade from gray to green reads nicely). Don't overlay a green duplicate that slides
-   in from off-canvas — the slide looks bad, and it's no longer necessary.
+   `label.color` **is** animatable, recolor the line *in place* on the step's own text object
+   when the step completes. **Snap it instantly** by default — set `label: { color.start: <green>,
+   color.end: <green> }` (the start==end snap trick) so the line flips to green discretely,
+   matching the teleported marker and checkmark. (A `cosine` fade via `color.end` alone also
+   works if you specifically want a gradual gray→green transition, but instant is the cleaner
+   default for a discrete "done" state.) Don't overlay a green duplicate that slides in from
+   off-canvas — the slide looks bad and is no longer necessary.
 3. **Done checkmark** — a green `✓` *label* object per step (there is no checkmark icon
    shape, so the check is a green text glyph on an invisible `line` carrier). Its text can't
    animate, so park it just off the left edge and **teleport** it into the gutter when its step
@@ -287,9 +290,9 @@ steps:
   - transitions:                                   # step 1 runs (SYN flies); marker already parked on line 1, no marker transition
       # ...syn message transition
   - transitions:                                   # step 2 runs; step 1 is now DONE
-      - { name: marker, position: { anchor.start: g2, anchor.end: g2 } }   # teleport marker to line 2
-      - { name: line1, label: { color.end: '#22c55e' }, strategy: cosine } # fade line 1 to green in place
-      - { name: check1, position: { anchor.start: g1, anchor.end: g1 } }   # teleport check into gutter
+      - { name: marker, position: { anchor.start: g2, anchor.end: g2 } }                 # teleport marker to line 2
+      - { name: line1, label: { color.start: '#22c55e', color.end: '#22c55e' } }         # snap line 1 to green in place
+      - { name: check1, position: { anchor.start: g1, anchor.end: g1 } }                 # teleport check into gutter
       # ...synack message transition
   # ...step 3 recolors line2 + reveals check2, then a final cleanup step recolors line3,
   #    reveals check3, and teleports marker to park
